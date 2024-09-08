@@ -17,11 +17,11 @@ class RoleEnum(enum.Enum):
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     name = Column(String, index=True, unique=True)
-    _password = Column("password", String)
     email = Column(String, index=True, unique=True)
-    disabled = Column(Boolean, index=True)
+    _password = Column("password", String)
+    disabled = Column(Boolean)
 
     @property
     def password(self):
