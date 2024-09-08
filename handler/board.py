@@ -24,8 +24,7 @@ async def create_board(board: BoardRequest, db: AsyncSession = Depends(get_db)):
 
 @router.get("/boards/", response_model=List[BoardResponse])
 async def read_boards(
-        offset: int = 0, limit: int = 10, db: AsyncSession = Depends(get_db),
-        current_user: User = Depends(get_current_user)
+    offset: int = 0, limit: int = 10, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
     boards = await db.execute(select(Board).offset(offset).limit(limit))
     return boards.scalars().all()

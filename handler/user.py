@@ -18,8 +18,8 @@ router = APIRouter()
 
 @router.post("/token")
 async def login_for_access_token(
-        form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-        db: AsyncSession = Depends(get_db),
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    db: AsyncSession = Depends(get_db),
 ) -> Token:
     user = await authenticate_user(form_data.username, form_data.password, db)
     if not user:
@@ -35,7 +35,7 @@ async def login_for_access_token(
 
 @router.get("/users/me/", response_model=UserResponse)
 async def read_users_me(
-        current_user: Annotated[UserResponse, Depends(get_current_active_user)],
+    current_user: Annotated[UserResponse, Depends(get_current_active_user)],
 ):
     return current_user
 
