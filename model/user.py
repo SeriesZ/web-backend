@@ -1,7 +1,17 @@
+import enum
+
 from sqlalchemy import Column, Integer, String, Boolean
 
 from auth import get_password_hash, verify_password
 from database import Base
+
+
+class RoleEnum(enum.Enum):
+    USER = "유저"
+    ADMIN = "관리자"
+    LAWYER = "변호사"
+    ACCOUNTANT = "회계사"
+    TAX_ADVISOR = "세무사"
 
 
 class User(Base):
