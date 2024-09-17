@@ -2,18 +2,24 @@ import uuid
 from datetime import datetime
 
 import pytz
-from sqlalchemy import Column, DateTime, String, event, Boolean, select
+from sqlalchemy import Column, DateTime, String, event, Boolean
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.ext.declarative import as_declarative, declared_attr
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.sql import selectable
 
 SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 KST = pytz.timezone("Asia/Seoul")
 
 async_engine = create_async_engine(SQLALCHEMY_DATABASE_URL, echo=True)
 
-AsyncSessionLocal = sessionmaker(bind=async_engine, class_=AsyncSession, expire_on_commit=False)
+AsyncSessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=async_engine,
+    class_=AsyncSession,
+    expire_on_commit=False
+)
 
 
 async def get_db():
@@ -23,7 +29,7 @@ async def get_db():
 
 async def init_db():
     async with async_engine.begin() as conn:
-        await conn.run_sync(declarative_base().metadata.create_all)
+        await conn.run_sync(Base.metadata.create_all)
 
 
 @as_declarative()
@@ -58,7 +64,9 @@ def before_insert(mapper, connection, target):
     target.id = f"{table_name}_{uuid.uuid4()}"
 
 
-@event.listens_for(Session, "before_execute")
-def add_in_use_condition(conn, clauseelement, *args, **kwargs):
-    if isinstance(clauseelement, select):
-        clauseelement = clauseelement.where(Base.in_use is True)
+# FIXME
+@event.listens_for(async_engine.sync_engine, "before_execute")
+async def add_in_use_condition(conn, cursor, statement, parameters, context, executemany):
+    if isinstance(statement, selectable.Select):
+        statement = statement.where(Base.in_use.is_(True))
+
