@@ -1,18 +1,18 @@
-from pydantic import BaseModel
+from datetime import datetime
+from typing import Optional
 
-from schema.user import UserResponse
+from pydantic import BaseModel
 
 
 class IdeationRequest(BaseModel):
-    id: str
+    id: Optional[str] = None
     title: str
     content: str
     image: str
     theme: str
-    presentation_date: str
-    close_date: str
-    status: str
-    user_id: int
+    presentation_date: Optional[datetime] = None
+    close_date: Optional[datetime] = None
+    status: Optional[str] = None
 
 
 class IdeationResponse(BaseModel):
@@ -21,8 +21,7 @@ class IdeationResponse(BaseModel):
     content: str
     image: str
     theme: str
-    presentation_date: str
-    close_date: str
-    status: str
-    user: UserResponse
+    presentation_date: Optional[datetime] = None
+    close_date: Optional[datetime] = None
+    status: Optional[str] = None
     view_count: int

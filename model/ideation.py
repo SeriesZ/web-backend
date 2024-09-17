@@ -24,19 +24,20 @@ class Ideation(Base):
         lazy="joined",
     )
 
-    comments = relationship(
-        "Comment",
-        primaryjoin="Comment.related_id == Ideation.id",
-        foreign_keys="[Comment.related_id]",
-        lazy="joined",
-    )
-
-    attachments = relationship(
-        "Attachment",
-        primaryjoin="Attachment.related_id == Ideation.id",
-        foreign_keys="[Attachment.related_id]",
-        lazy="joined",
-    )
+    # TODO comments, attachments 따로 병렬로 불러오는 방식으로 변경
+    # comments = relationship(
+    #     "Comment",
+    #     primaryjoin="Comment.related_id == Ideation.id",
+    #     foreign_keys="[Comment.related_id]",
+    #     lazy="joined",
+    # )
+    #
+    # attachments = relationship(
+    #     "Attachment",
+    #     primaryjoin="Attachment.related_id == Ideation.id",
+    #     foreign_keys="[Attachment.related_id]",
+    #     lazy="joined",
+    # )
 
     view_count = Column(Integer, default=0)  # 조회수
 
