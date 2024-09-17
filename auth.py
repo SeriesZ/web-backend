@@ -13,7 +13,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
 from schema.token import TokenData
-from schema.user import UserResponse
 
 load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
@@ -61,8 +60,8 @@ def create_access_token(data: dict, expires_delta: Union[timedelta, None] = None
 
 
 async def get_current_user(
-    token: Annotated[str, Depends(oauth2_scheme)],
-    db: AsyncSession = Depends(get_db),
+        token: Annotated[str, Depends(oauth2_scheme)],
+        db: AsyncSession = Depends(get_db),
 ):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -80,15 +79,10 @@ async def get_current_user(
     user = await get_user(db, email=token_data.email)
     if user is None:
         raise credentials_exception
-    return UserResponse(
-        name=user.name,
-        email=user.email,
-    )
+    return user
 
 
-async def get_current_active_user(
-    current_user: Annotated[UserResponse, Depends(get_current_user)],
-):
-    if current_user.disabled:
+async def get_current_active_user(current_user=Depends(get_current_user)):
+    if not current_user.in_use:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user

@@ -1,5 +1,7 @@
 from pydantic import BaseModel
 
+from schema.token import Token
+
 
 class UserRequest(BaseModel):
     email: str
@@ -8,8 +10,10 @@ class UserRequest(BaseModel):
 
 
 class UserResponse(BaseModel):
+    id: str
     email: str
     name: str
+    token: Token
 
     class Config:
         from_attributes = True

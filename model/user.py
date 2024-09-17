@@ -1,6 +1,6 @@
 import enum
 
-from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy import Column, String
 
 from auth import get_password_hash, verify_password
 from database import Base
@@ -20,7 +20,6 @@ class User(Base):
     name = Column(String, index=True)
     email = Column(String, index=True)
     _password = Column("password", String)
-    disabled = Column(Boolean)
 
     @property
     def password(self):
