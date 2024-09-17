@@ -2,11 +2,11 @@ import uuid
 from datetime import datetime
 
 import pytz
-from sqlalchemy import Column, DateTime, String, event
+from sqlalchemy import Column, DateTime, String, event, Boolean, select
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.ext.declarative import as_declarative, declared_attr
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 
 SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 KST = pytz.timezone("Asia/Seoul")
@@ -38,6 +38,7 @@ class Base:
         default=lambda: datetime.now(KST),
         onupdate=lambda: datetime.now(KST),
     )
+    in_use = Column(Boolean, default=True)
 
     @declared_attr
     def __tablename__(cls):
@@ -55,3 +56,9 @@ class Base:
 def before_insert(mapper, connection, target):
     table_name = target.__tablename__
     target.id = f"{table_name}_{uuid.uuid4()}"
+
+
+@event.listens_for(Session, "before_execute")
+def add_in_use_condition(conn, clauseelement, *args, **kwargs):
+    if isinstance(clauseelement, select):
+        clauseelement = clauseelement.where(Base.in_use is True)
