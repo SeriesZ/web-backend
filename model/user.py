@@ -17,8 +17,8 @@ class RoleEnum(enum.Enum):
 class User(Base):
     __tablename__ = "users"
 
-    name = Column(String, index=True, unique=True)
-    email = Column(String, index=True, unique=True)
+    name = Column(String, index=True)
+    email = Column(String, index=True)
     _password = Column("password", String)
     disabled = Column(Boolean)
 

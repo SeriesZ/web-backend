@@ -8,7 +8,7 @@ from database import Base
 class Investors(Base):
     __tablename__ = "investors"
 
-    name = Column(String, unique=True)  # 회사명
+    name = Column(String)  # 회사명
     description = Column(String)  # 설명
     image = Column(String)  # 기업 CI 이미지 url
     assets_under_management = Column(String)  # 운용 펀드 금액
