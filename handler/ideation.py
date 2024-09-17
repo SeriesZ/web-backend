@@ -2,7 +2,7 @@ import asyncio
 from typing import Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import func, update, select
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth import get_current_user
@@ -10,16 +10,18 @@ from common.cache import ttl_cache_with_signature
 from database import get_db
 from model.ideation import Ideation
 from model.user import User
-from schema.ideation import IdeationResponse, IdeationRequest
+from schema.ideation import IdeationRequest, IdeationResponse
 
 router = APIRouter()
 
 
 @ttl_cache_with_signature(ttl=60 * 10)
-@router.get("/ideations/themes", response_model=Dict[str, List[IdeationResponse]])
+@router.get(
+    "/ideations/themes", response_model=Dict[str, List[IdeationResponse]]
+)
 async def fetch_ideation_list_by_themes(
-        limit: int,
-        db: AsyncSession = Depends(get_db),
+    limit: int,
+    db: AsyncSession = Depends(get_db),
 ):
     """
     주어진 테마 수와 각 테마당 아이디어 수를 기준으로 아이디어를 가져옵니다.
@@ -34,24 +36,18 @@ async def fetch_ideation_list_by_themes(
     # 모든 고유한 테마를 조회
     themes_query = select(Ideation.theme).distinct()
     themes_result = await db.execute(themes_query)
-    themes = themes_result.scalars().all()
+    themes_result.scalars().all()
 
     # ROW_NUMBER를 사용하여 각 테마별 상위 4개 아이디어 가져오기
-    subquery = (
-        select(
-            Ideation,
-            func.row_number().over(
-                partition_by=Ideation.theme,
-                order_by=Ideation.created_at.desc()
-            ).label("rn")
-        ).subquery()
-    )
+    subquery = select(
+        Ideation,
+        func.row_number()
+        .over(partition_by=Ideation.theme, order_by=Ideation.created_at.desc())
+        .label("rn"),
+    ).subquery()
 
     # 상위 4개의 아이디어를 선택
-    query = (
-        select(subquery)
-        .where(subquery.c.rn <= limit)
-    )
+    query = select(subquery).where(subquery.c.rn <= limit)
 
     result = await db.execute(query)
     ideations = result.scalars().all()
@@ -68,9 +64,9 @@ async def fetch_ideation_list_by_themes(
 
 @router.get("/ideations/{id}", response_model=IdeationResponse)
 async def get_ideation(
-        id: str,
-        db: AsyncSession = Depends(get_db),
-        current_user: User = Depends(get_current_user),
+    id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """
     주어진 아이디어 ID를 기준으로 아이디어를 가져옵니다.
@@ -95,9 +91,9 @@ async def get_ideation(
 
 @router.post("/ideations", response_model=IdeationResponse)
 async def create_ideation(
-        request: IdeationRequest,
-        db: AsyncSession = Depends(get_db),
-        current_user: User = Depends(get_current_user),
+    request: IdeationRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """
     아이디어를 생성합니다.
@@ -122,10 +118,10 @@ async def create_ideation(
 
 @router.put("/ideations/{id}", response_model=IdeationResponse)
 async def update_ideation(
-        id: str,
-        request: IdeationRequest,
-        db: AsyncSession = Depends(get_db),
-        current_user: User = Depends(get_current_user),
+    id: str,
+    request: IdeationRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """
     주어진 아이디어 ID에 대해 아이디어를 업데이트합니다.
@@ -137,7 +133,9 @@ async def update_ideation(
         IdeationResponse: 업데이트된 아이디어 객체
     """
 
-    query = select(Ideation).where(Ideation.id == id, Ideation.user_id == current_user.id)
+    query = select(Ideation).where(
+        Ideation.id == id, Ideation.user_id == current_user.id
+    )
     result = await db.execute(query)
     ideation = result.scalars().first()
 
@@ -161,9 +159,9 @@ async def update_ideation(
 
 @router.delete("/ideations/{id}", status_code=204)
 async def delete_ideation(
-        id: str,
-        db: AsyncSession = Depends(get_db),
-        current_user: User = Depends(get_current_user),
+    id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """
     주어진 아이디어 ID에 대해 아이디어를 삭제합니다.
@@ -172,7 +170,9 @@ async def delete_ideation(
         id (int): 아이디어 ID
     """
     # 아이디어 조회
-    query = select(Ideation).where(Ideation.id == id, Ideation.user_id == current_user.id)
+    query = select(Ideation).where(
+        Ideation.id == id, Ideation.user_id == current_user.id
+    )
     result = await db.execute(query)
     ideation = result.scalars().first()
 

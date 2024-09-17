@@ -2,13 +2,9 @@ from typing import AsyncGenerator
 
 import pytest
 from httpx import AsyncClient
-from sqlalchemy import create_engine, StaticPool
-from sqlalchemy.ext.asyncio import (
-    create_async_engine,
-    AsyncSession,
-    AsyncConnection,
-    AsyncTransaction,
-)
+from sqlalchemy import StaticPool, create_engine
+from sqlalchemy.ext.asyncio import (AsyncConnection, AsyncSession,
+                                    AsyncTransaction, create_async_engine)
 from sqlalchemy.orm import sessionmaker
 
 from database import Base, get_db
@@ -22,7 +18,9 @@ def db_session():
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
-    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    TestingSessionLocal = sessionmaker(
+        autocommit=False, autoflush=False, bind=engine
+    )
     Base.metadata.create_all(bind=engine)
     session = TestingSessionLocal()
     yield session
@@ -42,15 +40,18 @@ async def connection() -> AsyncGenerator[AsyncConnection, None]:
 
 
 @pytest.fixture
-async def transaction(connection: AsyncConnection) -> AsyncGenerator[AsyncTransaction, None]:
+async def transaction(
+    connection: AsyncConnection,
+) -> AsyncGenerator[AsyncTransaction, None]:
     trans = await connection.begin()
     yield trans
     await trans.rollback()
 
 
 @pytest.fixture
-async def async_session(connection: AsyncConnection, transaction: AsyncTransaction) -> AsyncGenerator[
-    AsyncSession, None]:
+async def async_session(
+    connection: AsyncConnection, transaction: AsyncTransaction
+) -> AsyncGenerator[AsyncSession, None]:
     async_session = AsyncSession(bind=connection, expire_on_commit=False)
 
     await connection.run_sync(Base.metadata.create_all)
@@ -67,21 +68,19 @@ async def async_session(connection: AsyncConnection, transaction: AsyncTransacti
 
 
 @pytest.fixture
-async def client(async_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
+async def client(
+    async_session: AsyncSession,
+) -> AsyncGenerator[AsyncClient, None]:
     async with AsyncClient(app=app, base_url="http://testserver") as ac:
         yield ac
 
 
 async def create_user_and_get_auth_token(
-        client: AsyncClient,
-        email: str = "testuser@test.com",
-        password: str = "password"
+    client: AsyncClient,
+    email: str = "testuser@test.com",
+    password: str = "password",
 ):
-    test_user = {
-        "name": "testuser",
-        "email": email,
-        "password": password
-    }
+    test_user = {"name": "testuser", "email": email, "password": password}
 
     response = await client.post("/users/", json=test_user)
     assert response.status_code == 200, "Failed to create user"

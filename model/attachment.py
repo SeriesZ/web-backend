@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer
+from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 
 from database import Base
@@ -9,7 +9,9 @@ class Attachment(Base):
 
     file_name = Column(String, nullable=False)  # 파일 이름
     file_path = Column(String, nullable=False)  # 파일 경로 (s3 저장 경로)
-    file_type = Column(String, nullable=False)  # 파일 유형 (예: image/jpeg, application/pdf)
+    file_type = Column(
+        String, nullable=False
+    )  # 파일 유형 (예: image/jpeg, application/pdf)
     related_id = Column(Integer, nullable=False)  # 연결된 id
 
 

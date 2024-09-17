@@ -1,6 +1,6 @@
 import os
 from datetime import datetime, timedelta, timezone
-from typing import Union, Annotated
+from typing import Annotated, Union
 
 from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, status
@@ -39,7 +39,9 @@ async def get_user(db: AsyncSession, email: str):
     return result.scalar_one_or_none()
 
 
-async def authenticate_user(email: str, password: str, db: AsyncSession = Depends(get_db)):
+async def authenticate_user(
+    email: str, password: str, db: AsyncSession = Depends(get_db)
+):
     user = await get_user(db, email)
     if not user:
         return False
@@ -48,7 +50,9 @@ async def authenticate_user(email: str, password: str, db: AsyncSession = Depend
     return user
 
 
-def create_access_token(data: dict, expires_delta: Union[timedelta, None] = None):
+def create_access_token(
+    data: dict, expires_delta: Union[timedelta, None] = None
+):
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
@@ -60,8 +64,8 @@ def create_access_token(data: dict, expires_delta: Union[timedelta, None] = None
 
 
 async def get_current_user(
-        token: Annotated[str, Depends(oauth2_scheme)],
-        db: AsyncSession = Depends(get_db),
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: AsyncSession = Depends(get_db),
 ):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

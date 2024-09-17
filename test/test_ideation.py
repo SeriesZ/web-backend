@@ -1,7 +1,6 @@
 import pytest
+from conftest import create_user_and_get_auth_token
 from httpx import AsyncClient
-
-from conftest import client, create_user_and_get_auth_token
 
 
 @pytest.mark.anyio
@@ -19,7 +18,9 @@ class TestIdeation:
         headers = await create_user_and_get_auth_token(client)
 
         # 아이디어 생성
-        response = await client.post("/ideations", json=self.ideation, headers=headers)
+        response = await client.post(
+            "/ideations", json=self.ideation, headers=headers
+        )
 
         assert response.status_code == 200
         assert response.json()["title"] == self.ideation["title"]
@@ -29,22 +30,32 @@ class TestIdeation:
         headers = await create_user_and_get_auth_token(client)
 
         # 아이디어 생성
-        create_response = await client.post("/ideations", json=self.ideation, headers=headers)
+        create_response = await client.post(
+            "/ideations", json=self.ideation, headers=headers
+        )
         ideation_id = create_response.json()["id"]
 
         # 아이디어 조회
-        response = await client.get(f"/ideations/{ideation_id}", headers=headers)
+        response = await client.get(
+            f"/ideations/{ideation_id}", headers=headers
+        )
 
         assert response.status_code == 200
         assert response.json()["title"] == self.ideation["title"]
 
         # 아이디어 다시 조회 (view_count 증가 확인)
-        headers = await create_user_and_get_auth_token(client, email="test2@test.com", password="password")
-        response = await client.get(f"/ideations/{ideation_id}", headers=headers)
+        headers = await create_user_and_get_auth_token(
+            client, email="test2@test.com", password="password"
+        )
+        response = await client.get(
+            f"/ideations/{ideation_id}", headers=headers
+        )
         assert response.status_code == 200
         assert response.json()["view_count"] == 1
 
-        response = await client.get(f"/ideations/{ideation_id}", headers=headers)
+        response = await client.get(
+            f"/ideations/{ideation_id}", headers=headers
+        )
         assert response.status_code == 200
         assert response.json()["view_count"] == 2
 
@@ -52,7 +63,9 @@ class TestIdeation:
         headers = await create_user_and_get_auth_token(client)
 
         # 아이디어 생성 (테스트를 위한)
-        create_response = await client.post("/ideations", json=self.ideation, headers=headers)
+        create_response = await client.post(
+            "/ideations", json=self.ideation, headers=headers
+        )
         ideation_id = create_response.json()["id"]
 
         # 업데이트 시에는 전체 필드에서 변경된 필드 바꿔서 요청
@@ -61,7 +74,9 @@ class TestIdeation:
         updated_ideation["content"] = "Updated content."
 
         # 아이디어 업데이트
-        response = await client.put(f"/ideations/{ideation_id}", json=updated_ideation, headers=headers)
+        response = await client.put(
+            f"/ideations/{ideation_id}", json=updated_ideation, headers=headers
+        )
 
         assert response.status_code == 200
         assert response.json()["title"] == updated_ideation["title"]
@@ -71,14 +86,20 @@ class TestIdeation:
         headers = await create_user_and_get_auth_token(client)
 
         # 아이디어 생성
-        create_response = await client.post("/ideations", json=self.ideation, headers=headers)
+        create_response = await client.post(
+            "/ideations", json=self.ideation, headers=headers
+        )
         ideation_id = create_response.json()["id"]
 
         # 아이디어 삭제
-        response = await client.delete(f"/ideations/{ideation_id}", headers=headers)
+        response = await client.delete(
+            f"/ideations/{ideation_id}", headers=headers
+        )
 
         assert response.status_code == 204
 
-        response = await client.get(f"/ideations/{ideation_id}", headers=headers)
+        response = await client.get(
+            f"/ideations/{ideation_id}", headers=headers
+        )
 
         assert response.status_code == 404

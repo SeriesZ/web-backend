@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 
 import pytz
-from sqlalchemy import Column, DateTime, String, event, Boolean
+from sqlalchemy import Boolean, Column, DateTime, String, event
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.ext.declarative import as_declarative, declared_attr
 from sqlalchemy.orm import sessionmaker
@@ -18,7 +18,7 @@ AsyncSessionLocal = sessionmaker(
     autoflush=False,
     bind=async_engine,
     class_=AsyncSession,
-    expire_on_commit=False
+    expire_on_commit=False,
 )
 
 
@@ -55,10 +55,12 @@ class Base:
             if hasattr(self, key):
                 setattr(self, key, value)
             else:
-                raise AttributeError(f"{self.__class__.__name__} does not have attribute {key}")
+                raise AttributeError(
+                    f"{self.__class__.__name__} does not have attribute {key}"
+                )
 
 
-@event.listens_for(Base, 'before_insert', propagate=True)
+@event.listens_for(Base, "before_insert", propagate=True)
 def before_insert(mapper, connection, target):
     table_name = target.__tablename__
     target.id = f"{table_name}_{uuid.uuid4()}"
@@ -66,7 +68,8 @@ def before_insert(mapper, connection, target):
 
 # FIXME
 @event.listens_for(async_engine.sync_engine, "before_execute")
-async def add_in_use_condition(conn, cursor, statement, parameters, context, executemany):
+async def add_in_use_condition(
+    conn, cursor, statement, parameters, context, executemany
+):
     if isinstance(statement, selectable.Select):
         statement = statement.where(Base.in_use.is_(True))
-

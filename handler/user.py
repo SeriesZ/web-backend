@@ -8,19 +8,20 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
-from auth import authenticate_user, ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token, get_current_active_user
+from auth import (ACCESS_TOKEN_EXPIRE_MINUTES, authenticate_user,
+                  create_access_token, get_current_active_user)
 from database import get_db
 from model.user import User
 from schema.token import Token
-from schema.user import UserResponse, UserRequest
+from schema.user import UserRequest, UserResponse
 
 router = APIRouter()
 
 
 @router.post("/token")
 async def login_for_access_token(
-        form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-        db: AsyncSession = Depends(get_db),
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    db: AsyncSession = Depends(get_db),
 ) -> Token:
     user = await authenticate_user(
         email=form_data.username,
@@ -38,13 +39,15 @@ async def login_for_access_token(
 
 @router.get("/users/me/", response_model=UserResponse)
 async def read_users_me(
-        current_user: Annotated[UserResponse, Depends(get_current_active_user)],
+    current_user: Annotated[UserResponse, Depends(get_current_active_user)],
 ):
     return current_user
 
 
 @router.post("/users/", response_model=UserResponse)
-async def create_user(request: UserRequest, db: AsyncSession = Depends(get_db)):
+async def create_user(
+    request: UserRequest, db: AsyncSession = Depends(get_db)
+):
     db_user = User(
         name=request.name,
         email=request.email,
@@ -71,12 +74,16 @@ async def create_user(request: UserRequest, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/users/", response_model=List[UserResponse])
-async def read_users(offset: int = 0, limit: int = 10, db: AsyncSession = Depends(get_db)):
+async def read_users(
+    offset: int = 0, limit: int = 10, db: AsyncSession = Depends(get_db)
+):
     users = await db.execute(select(User).offset(offset).limit(limit))
     return users.scalars().all()
 
 
 def _create_token(user: User):
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(data={"sub": user.email}, expires_delta=access_token_expires)
+    access_token = create_access_token(
+        data={"sub": user.email}, expires_delta=access_token_expires
+    )
     return Token(access_token=access_token, token_type="bearer")
