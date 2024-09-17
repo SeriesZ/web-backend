@@ -15,10 +15,28 @@ class Ideation(Base):
     presentation_date = Column(DateTime(timezone=True))  # 사업설명회 날짜
     close_date = Column(DateTime)  # 라운드 종료 날짜
     status = Column(String)  # 상태 (예: 진행중, 종료)
+    user_id = Column(Integer)  # 작성자 id
 
-    user = relationship("User", back_populates="ideations")  # N:1
-    comments = relationship("Comment", back_populates="ideation")  # 1:N
-    attachments = relationship("Attachment", back_populates="ideation")  # 1:N
+    user = relationship(
+        "User",
+        primaryjoin="User.id == Ideation.user_id",
+        foreign_keys="[Ideation.user_id]",
+        lazy="joined",
+    )
+
+    comments = relationship(
+        "Comment",
+        primaryjoin="Comment.related_id == Ideation.id",
+        foreign_keys="[Comment.related_id]",
+        lazy="joined",
+    )
+
+    attachments = relationship(
+        "Attachment",
+        primaryjoin="Attachment.related_id == Ideation.id",
+        foreign_keys="[Attachment.related_id]",
+        lazy="joined",
+    )
 
     view_count = Column(Integer, default=0)  # 조회수
 

@@ -17,9 +17,21 @@ class Investors(Base):
 
 class Progress(Base):
     __tablename__ = "progress"
+    ideation_id = Column(Integer)  # 연결된 id
+    investor_id = Column(Integer)  # 투자자 id
 
-    ideation = relationship("Ideation", back_populates="progress")  # 1:1
-    investor = relationship("Investors", back_populates="progress")  # 1:1
+    ideation = relationship(
+        "Ideation",
+        primaryjoin="Progress.ideation_id == Ideation.id",
+        foreign_keys="[Progress.ideation_id]",
+        lazy="joined",
+    )
+    investor = relationship(
+        "Investors",
+        primaryjoin="Progress.investor_id == Investors.id",
+        foreign_keys="[Progress.investor_id]",
+        lazy="joined",
+    )
 
     amount = Column(Integer)  # 투자 금액
     approval_status = Column(Boolean)  # 투자 승인 여부

@@ -1,7 +1,8 @@
+import uuid
 from datetime import datetime
 
 import pytz
-from sqlalchemy import Column, Integer, DateTime
+from sqlalchemy import Column, DateTime, String, event
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.ext.declarative import as_declarative, declared_attr
 from sqlalchemy.ext.declarative import declarative_base
@@ -27,7 +28,7 @@ async def init_db():
 
 @as_declarative()
 class Base:
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(String, primary_key=True, index=True)
     created_at = Column(
         DateTime(timezone=True),
         default=lambda: datetime.now(KST),
@@ -41,3 +42,16 @@ class Base:
     @declared_attr
     def __tablename__(cls):
         return cls.__name__.lower()
+
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+            else:
+                raise AttributeError(f"{self.__class__.__name__} does not have attribute {key}")
+
+
+@event.listens_for(Base, 'before_insert', propagate=True)
+def before_insert(mapper, connection, target):
+    table_name = target.__tablename__
+    target.id = f"{table_name}_{uuid.uuid4()}"
