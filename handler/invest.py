@@ -13,7 +13,7 @@ from model.invest import Investment, Investor
 from model.user import RoleEnum, User
 from schema.invest import InvestmentRequest, InvestorRequest
 
-router = APIRouter(tags=["invest"])
+router = APIRouter(tags=["투자"])
 
 
 @router.post("/investments", status_code=status.HTTP_201_CREATED)

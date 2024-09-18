@@ -10,7 +10,7 @@ from model.board import Board
 from model.user import User
 from schema.board import BoardRequest, BoardResponse
 
-router = APIRouter()
+router = APIRouter(tags=["공지사항/게시판"])
 
 
 @router.post("/boards/", response_model=BoardResponse)

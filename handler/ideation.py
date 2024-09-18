@@ -16,7 +16,7 @@ from model.user import User
 from schema.ideation import IdeationRequest, IdeationResponse
 from service.ideation import fetch_themes
 
-router = APIRouter()
+router = APIRouter(tags=["아이디어"])
 
 
 @ttl_cache_with_signature(ttl=60 * 10)

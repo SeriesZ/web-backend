@@ -17,7 +17,7 @@ from model.user import RoleEnum, User
 from schema.token import Token
 from schema.user import UserRequest, UserResponse
 
-router = APIRouter()
+router = APIRouter(tags=["유저"])
 
 
 @router.post("/token")
