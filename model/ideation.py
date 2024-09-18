@@ -27,15 +27,13 @@ class Ideation(Base):
 
     investment_goal = Column(Integer)  # 목표 금액 (단위: 만원)
     # 120명 / 30,000,000원 확보 / 달성률 85%
-    progress = relationship(
-        "Progress",
+    investments = relationship(
+        "Investment",
         back_populates="ideation",
-        primaryjoin="Ideation.id == Progress.ideation_id",
-        foreign_keys="[Progress.ideation_id]",
+        primaryjoin="Ideation.id == Investment.ideation_id",
+        foreign_keys="[Investment.ideation_id]",
         lazy="joined",
         uselist=True,
-        nullable=True,
-        order_by="Progress.created_at.desc()",
     )
 
     # TODO comments, attachments 따로 병렬로 불러오는 방식으로 변경

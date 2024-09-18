@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -26,9 +26,14 @@ class IdeationResponse(BaseModel):
     presentation_date: Optional[datetime] = None
     close_date: Optional[datetime] = None
     status: Optional[str] = None
-
     view_count: int
-    investment_goal: Optional[int] \
-        = Field(..., description="목표 금액 (단위: 만원)")
-    progress: Optional[List[InvestmentResponse]] \
-        = Field(..., description="투자 진행 상황")
+
+    investment_goal: Optional[int] = Field(
+        ..., description="목표 금액 (단위: 만원)"
+    )
+    investments: Optional[List[InvestmentResponse]] = Field(
+        ..., description="투자 진행 상황"
+    )
+
+    class Config:
+        from_attributes = True

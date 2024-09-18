@@ -85,8 +85,11 @@ async def create_user_and_get_auth_token(
     response = await client.post("/users/", json=test_user)
     assert response.status_code == 200, "Failed to create user"
 
-    user = response.json()
-    token = user["token"]
+    response = await client.post(
+        "/token", data={"username": email, "password": password}
+    )
+    assert response.status_code == 200, "Failed to get access token"
+    token = response.json()
     access_token = token["access_token"]
     headers = {"Authorization": f"Bearer {access_token}"}
     return headers

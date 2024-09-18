@@ -14,6 +14,10 @@ class TestIdeation:
         "close_date": "2024-01-31T00:00:00",
     }
 
+    @pytest.fixture
+    async def initial_data(self, async_session):
+        await create_initial_data(async_session)
+
     async def test_create_ideation(self, client: AsyncClient):
         headers = await create_user_and_get_auth_token(client)
 
@@ -103,3 +107,18 @@ class TestIdeation:
         )
 
         assert response.status_code == 404
+
+    async def test_fetch_ideations(self, client: AsyncClient):
+        headers = await create_user_and_get_auth_token(client)
+
+        # 아이디어 생성
+        create_response = await client.post(
+            "/ideations", json=self.ideation, headers=headers
+        )
+
+        # 아이디어 목록 조회
+        response = await client.get("/ideations", headers=headers)
+
+        assert response.status_code == 200
+        assert len(response.json()) > 0
+        assert response.json()[0]["title"] == self.ideation["title"]

@@ -24,35 +24,35 @@ class Investment(Base):
 
     ideation = relationship(
         "Ideation",
-        primaryjoin="Progress.ideation_id == Ideation.id",
-        foreign_keys="[Progress.ideation_id]",
+        primaryjoin="Investment.ideation_id == Ideation.id",
+        foreign_keys="[Investment.ideation_id]",
         lazy="joined",
     )
     investor = relationship(
-        "Investors",
-        primaryjoin="Progress.investor_id == Investors.id",
-        foreign_keys="[Progress.investor_id]",
+        "Investor",
+        primaryjoin="Investment.investor_id == Investor.id",
+        foreign_keys="[Investment.investor_id]",
         lazy="joined",
     )
 
 
 # 사용자와 투자자의 관계
-class InvestorUser(Base):
-    __tablename__ = 'investor_user'
-
-    user_id = Column(Integer, primary_key=True)
-    investor_id = Column(Integer, primary_key=True)
-
-    # 사용자와 투자자에 대한 관계 설정
-    user = relationship(
-        "User",
-        primaryjoin="User.id == InvestorUser.user_id",
-        foreign_keys="[InvestorUser.user_id]",
-        lazy="joined",
-    )
-    investor = relationship(
-        "Investor",
-        primaryjoin="Investor.id == InvestorUser.investor_id",
-        foreign_keys="[InvestorUser.investor_id]",
-        lazy="joined",
-    )
+# class InvestorUser(Base):
+#     __tablename__ = 'investor_user'
+#
+#     user_id = Column(Integer, primary_key=True)
+#     investor_id = Column(Integer, primary_key=True)
+#
+#     # 사용자와 투자자에 대한 관계 설정
+#     user = relationship(
+#         "User",
+#         primaryjoin="User.id == InvestorUser.user_id",
+#         foreign_keys="[InvestorUser.user_id]",
+#         lazy="joined",
+#     )
+#     investor = relationship(
+#         "Investor",
+#         primaryjoin="Investor.id == InvestorUser.investor_id",
+#         foreign_keys="[InvestorUser.investor_id]",
+#         lazy="joined",
+#     )

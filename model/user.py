@@ -1,6 +1,7 @@
 import enum
 
 from sqlalchemy import Column, String
+from sqlalchemy.orm import relationship
 
 from auth import get_password_hash, verify_password
 from database import Base
@@ -22,6 +23,14 @@ class User(Base):
     email = Column(String, index=True)
     _password = Column("password", String)
     role = Column(String, default=RoleEnum.USER.value)
+    investor_id = Column(String, nullable=True)
+
+    investor = relationship(
+        "Investor",
+        primaryjoin="User.investor_id == Investor.id",
+        foreign_keys="[User.investor_id]",
+        lazy="joined",
+    )
 
     @property
     def password(self):

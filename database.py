@@ -6,7 +6,6 @@ from sqlalchemy import Boolean, Column, DateTime, String, event
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.ext.declarative import as_declarative, declared_attr
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.sql import selectable
 
 SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 KST = pytz.timezone("Asia/Seoul")
@@ -64,12 +63,3 @@ class Base:
 def before_insert(mapper, connection, target):
     table_name = target.__tablename__
     target.id = f"{table_name}_{uuid.uuid4()}"
-
-
-# FIXME
-@event.listens_for(async_engine.sync_engine, "before_execute")
-async def add_in_use_condition(
-    conn, cursor, statement, parameters, context, executemany
-):
-    if isinstance(statement, selectable.Select):
-        statement = statement.where(Base.in_use.is_(True))

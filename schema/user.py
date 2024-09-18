@@ -1,6 +1,6 @@
-from pydantic import BaseModel
+from typing import Optional
 
-from schema.token import Token
+from pydantic import BaseModel
 
 
 class UserRequest(BaseModel):
@@ -13,7 +13,7 @@ class UserResponse(BaseModel):
     id: str
     email: str
     name: str
-    token: Token
+    investor_id: Optional[str] = None
 
     class Config:
         from_attributes = True

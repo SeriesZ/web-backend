@@ -42,3 +42,6 @@ class InvestmentResponse(BaseModel):
 
     amount: int
     approval_status: bool
+
+    class Config:
+        from_attributes = True
