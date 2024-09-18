@@ -41,7 +41,7 @@ async def connection() -> AsyncGenerator[AsyncConnection, None]:
 
 @pytest.fixture
 async def transaction(
-    connection: AsyncConnection,
+        connection: AsyncConnection,
 ) -> AsyncGenerator[AsyncTransaction, None]:
     trans = await connection.begin()
     yield trans
@@ -50,7 +50,7 @@ async def transaction(
 
 @pytest.fixture
 async def async_session(
-    connection: AsyncConnection, transaction: AsyncTransaction
+        connection: AsyncConnection, transaction: AsyncTransaction
 ) -> AsyncGenerator[AsyncSession, None]:
     async_session = AsyncSession(bind=connection, expire_on_commit=False)
 
@@ -69,16 +69,16 @@ async def async_session(
 
 @pytest.fixture
 async def client(
-    async_session: AsyncSession,
+        async_session: AsyncSession,
 ) -> AsyncGenerator[AsyncClient, None]:
     async with AsyncClient(app=app, base_url="http://testserver") as ac:
         yield ac
 
 
 async def create_user_and_get_auth_token(
-    client: AsyncClient,
-    email: str = "testuser@test.com",
-    password: str = "password",
+        client: AsyncClient,
+        email: str = "testuser@test.com",
+        password: str = "password",
 ):
     test_user = {"name": "testuser", "email": email, "password": password}
 
@@ -93,3 +93,68 @@ async def create_user_and_get_auth_token(
     access_token = token["access_token"]
     headers = {"Authorization": f"Bearer {access_token}"}
     return headers
+
+
+@pytest.fixture
+async def create_ideation_data(async_session: AsyncSession):
+    from model.invest import Investor
+    from model.user import User
+    from model.ideation import Ideation
+    from model.invest import Investment
+    import datetime
+    from model.user import RoleEnum
+
+    investor = Investor(
+        name="Test Investor",
+        description="This is a test investor",
+        image="http://example.com/image.jpg",
+        assets_under_management="1million",
+        investment_count=1234,
+    )
+    async_session.add(investor)
+    await async_session.commit()
+    await async_session.refresh(investor)
+
+    user = User(
+        name="testuser",
+        email="test234@test.com",
+    )
+    user.password = "password"
+    user.role = RoleEnum.INVESTOR.value
+    user.investor_id = investor.id
+
+    async_session.add(user)
+    await async_session.commit()
+    await async_session.refresh(user)
+
+    ideation = Ideation(
+        title="Test Ideation",
+        content="This is a test idea",
+        image="http://example.com/image.jpg",
+        theme="BioIndustry",
+        presentation_date=datetime.datetime(2024, 1, 1),
+        close_date=datetime.datetime(2024, 1, 31),
+        investment_goal=10000,
+    )
+    ideation.user_id = user.id
+    async_session.add(ideation)
+    await async_session.commit()
+    await async_session.refresh(ideation)
+
+    investment1 = Investment(
+        ideation_id=ideation.id,
+        investor_id=investor.id,
+        amount=100,
+        approval_status=True,
+    )
+    investment2 = Investment(
+        ideation_id=ideation.id,
+        investor_id=investor.id,
+        amount=200,
+        approval_status=True,
+    )
+    async_session.add(investment1)
+    async_session.add(investment2)
+    await async_session.commit()
+    await async_session.refresh(investment1)
+    await async_session.refresh(investment2)

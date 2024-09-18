@@ -1,8 +1,10 @@
+from collections import defaultdict
 from typing import Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from starlette import status
 from starlette.responses import Response
 
@@ -22,39 +24,41 @@ router = APIRouter()
     "/ideations/themes", response_model=Dict[str, List[IdeationResponse]]
 )
 async def fetch_ideation_list_by_themes(
-    limit: int,
+    limit: int = 5,
     db: AsyncSession = Depends(get_db),
 ):
     # 모든 고유한 테마를 조회
-    themes_result = fetch_themes(db)
+    themes_result = await fetch_themes(db)
 
-    # ROW_NUMBER를 사용하여 각 테마별 상위 4개 아이디어 가져오기
+    # 1. 서브쿼리: 각 테마별 상위 N개의 id 가져오기
     subquery = (
         select(
-            Ideation,
+            Ideation.id,
             func.row_number()
             .over(
                 partition_by=Ideation.theme,
                 order_by=Ideation.created_at.desc(),
             )
             .label("rn"),
-        )
+            )
         .where(Ideation.theme.in_(themes_result))
         .subquery()
     )
 
-    # 상위 4개의 아이디어를 선택
-    query = select(subquery).where(subquery.c.rn <= limit)
+    # 2. 메인 쿼리: 상위 N개의 id를 가진 Ideation 엔티티 및 조인된 데이터 가져오기
+    query = (
+        select(Ideation)
+        .where(Ideation.id.in_(select(subquery.c.id).where(subquery.c.rn <= limit)))
+        .options(selectinload(Ideation.user), selectinload(Ideation.investments))
+    )
 
     result = await db.execute(query)
     ideations = result.scalars().all()
-
     # 결과를 각 테마별로 그룹화
-    theme_ideations = {}
+    theme_ideations = defaultdict(list)
     for ideation in ideations:
-        if ideation.theme not in theme_ideations:
-            theme_ideations[ideation.theme] = []
-        theme_ideations[ideation.theme].append(ideation)
+        res = IdeationResponse.model_validate(ideation)
+        theme_ideations[ideation.theme].append(res)
 
     return theme_ideations
 

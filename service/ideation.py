@@ -31,6 +31,6 @@ async def fetch_themes(db: AsyncSession, items: List[str] = None):
         clauses = [Ideation.theme == item for item in items]
     else:
         clauses = [True]
-    themes_query = select(Ideation.theme).where(clauses).distinct()
+    themes_query = select(Ideation.theme).where(*clauses).distinct()
     themes_result = await db.execute(themes_query)
     return themes_result.scalars().all()

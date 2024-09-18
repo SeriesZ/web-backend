@@ -1,6 +1,7 @@
 import pytest
-from conftest import create_user_and_get_auth_token
 from httpx import AsyncClient
+
+from conftest import create_user_and_get_auth_token
 
 
 @pytest.mark.anyio
@@ -13,10 +14,6 @@ class TestIdeation:
         "presentation_date": "2024-01-01T00:00:00",
         "close_date": "2024-01-31T00:00:00",
     }
-
-    @pytest.fixture
-    async def initial_data(self, async_session):
-        await create_initial_data(async_session)
 
     async def test_create_ideation(self, client: AsyncClient):
         headers = await create_user_and_get_auth_token(client)
@@ -108,17 +105,25 @@ class TestIdeation:
 
         assert response.status_code == 404
 
-    async def test_fetch_ideations(self, client: AsyncClient):
-        headers = await create_user_and_get_auth_token(client)
-
-        # 아이디어 생성
-        create_response = await client.post(
-            "/ideations", json=self.ideation, headers=headers
-        )
-
-        # 아이디어 목록 조회
-        response = await client.get("/ideations", headers=headers)
-
+    async def test_fetch_ideation_by_themes(self, client: AsyncClient, create_ideation_data):
+        response = await client.get("/ideations/themes")
         assert response.status_code == 200
-        assert len(response.json()) > 0
-        assert response.json()[0]["title"] == self.ideation["title"]
+
+        theme_to_ideations = response.json()
+        assert "BioIndustry" in theme_to_ideations
+
+        ideations = theme_to_ideations["BioIndustry"]
+        assert len(ideations) == 1
+
+        ideation = ideations[0]
+        assert ideation["title"] == "Test Ideation"
+        assert ideation["theme"] == "BioIndustry"
+        assert ideation["investment_goal"] == 10000
+
+        investments = ideation["investments"]
+        assert len(investments) == 2
+        assert investments[0]["amount"] == 100
+        assert investments[1]["amount"] == 200
+
+        investment_amounts = sum([investment["amount"] for investment in investments])
+        assert investment_amounts == 300
