@@ -5,7 +5,7 @@ from database import Base
 
 
 # 투자회사
-class Investors(Base):
+class Investor(Base):
     __tablename__ = "investors"
 
     name = Column(String)  # 회사명

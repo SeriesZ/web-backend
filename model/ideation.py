@@ -16,12 +16,26 @@ class Ideation(Base):
     close_date = Column(DateTime)  # 라운드 종료 날짜
     status = Column(String)  # 상태 (예: 진행중, 종료)
     user_id = Column(Integer)  # 작성자 id
+    view_count = Column(Integer, default=0)  # 조회수
 
     user = relationship(
         "User",
         primaryjoin="User.id == Ideation.user_id",
         foreign_keys="[Ideation.user_id]",
         lazy="joined",
+    )
+
+    investment_goal = Column(Integer)  # 목표 금액 (단위: 만원)
+    # 120명 / 30,000,000원 확보 / 달성률 85%
+    progress = relationship(
+        "Progress",
+        back_populates="ideation",
+        primaryjoin="Ideation.id == Progress.ideation_id",
+        foreign_keys="[Progress.ideation_id]",
+        lazy="joined",
+        uselist=True,
+        nullable=True,
+        order_by="Progress.created_at.desc()",
     )
 
     # TODO comments, attachments 따로 병렬로 불러오는 방식으로 변경
@@ -38,12 +52,6 @@ class Ideation(Base):
     #     foreign_keys="[Attachment.related_id]",
     #     lazy="joined",
     # )
-
-    view_count = Column(Integer, default=0)  # 조회수
-
-    # TODO
-    # progress = relationship("Progress", back_populates="ideation")
-    # 120명 / 30,000,000원 확보 / 달성률 85%
 
     # FIXME 투자 조건 (text or html)
     # 아래 외의 투자조건이 다양하게 있으면 text로 저장하는게 편리.
