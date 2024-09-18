@@ -1,7 +1,6 @@
 import pytest
-from httpx import AsyncClient
-
 from conftest import create_user_and_get_auth_token
+from httpx import AsyncClient
 
 
 @pytest.mark.anyio
@@ -105,7 +104,9 @@ class TestIdeation:
 
         assert response.status_code == 404
 
-    async def test_fetch_ideation_by_themes(self, client: AsyncClient, create_ideation_data):
+    async def test_fetch_ideation_by_themes(
+        self, client: AsyncClient, create_ideation_data
+    ):
         response = await client.get("/ideations/themes")
         assert response.status_code == 200
 
@@ -125,5 +126,7 @@ class TestIdeation:
         assert investments[0]["amount"] == 100
         assert investments[1]["amount"] == 200
 
-        investment_amounts = sum([investment["amount"] for investment in investments])
+        investment_amounts = sum(
+            [investment["amount"] for investment in investments]
+        )
         assert investment_amounts == 300

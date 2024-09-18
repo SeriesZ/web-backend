@@ -41,7 +41,7 @@ async def connection() -> AsyncGenerator[AsyncConnection, None]:
 
 @pytest.fixture
 async def transaction(
-        connection: AsyncConnection,
+    connection: AsyncConnection,
 ) -> AsyncGenerator[AsyncTransaction, None]:
     trans = await connection.begin()
     yield trans
@@ -50,7 +50,7 @@ async def transaction(
 
 @pytest.fixture
 async def async_session(
-        connection: AsyncConnection, transaction: AsyncTransaction
+    connection: AsyncConnection, transaction: AsyncTransaction
 ) -> AsyncGenerator[AsyncSession, None]:
     async_session = AsyncSession(bind=connection, expire_on_commit=False)
 
@@ -69,16 +69,16 @@ async def async_session(
 
 @pytest.fixture
 async def client(
-        async_session: AsyncSession,
+    async_session: AsyncSession,
 ) -> AsyncGenerator[AsyncClient, None]:
     async with AsyncClient(app=app, base_url="http://testserver") as ac:
         yield ac
 
 
 async def create_user_and_get_auth_token(
-        client: AsyncClient,
-        email: str = "testuser@test.com",
-        password: str = "password",
+    client: AsyncClient,
+    email: str = "testuser@test.com",
+    password: str = "password",
 ):
     test_user = {"name": "testuser", "email": email, "password": password}
 
@@ -97,12 +97,11 @@ async def create_user_and_get_auth_token(
 
 @pytest.fixture
 async def create_ideation_data(async_session: AsyncSession):
-    from model.invest import Investor
-    from model.user import User
-    from model.ideation import Ideation
-    from model.invest import Investment
     import datetime
-    from model.user import RoleEnum
+
+    from model.ideation import Ideation
+    from model.invest import Investment, Investor
+    from model.user import RoleEnum, User
 
     investor = Investor(
         name="Test Investor",

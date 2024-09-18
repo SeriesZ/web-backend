@@ -40,7 +40,7 @@ async def fetch_ideation_list_by_themes(
                 order_by=Ideation.created_at.desc(),
             )
             .label("rn"),
-            )
+        )
         .where(Ideation.theme.in_(themes_result))
         .subquery()
     )
@@ -48,8 +48,14 @@ async def fetch_ideation_list_by_themes(
     # 2. 메인 쿼리: 상위 N개의 id를 가진 Ideation 엔티티 및 조인된 데이터 가져오기
     query = (
         select(Ideation)
-        .where(Ideation.id.in_(select(subquery.c.id).where(subquery.c.rn <= limit)))
-        .options(selectinload(Ideation.user), selectinload(Ideation.investments))
+        .where(
+            Ideation.id.in_(
+                select(subquery.c.id).where(subquery.c.rn <= limit)
+            )
+        )
+        .options(
+            selectinload(Ideation.user), selectinload(Ideation.investments)
+        )
     )
 
     result = await db.execute(query)
