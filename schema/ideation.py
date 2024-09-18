@@ -3,7 +3,7 @@ from typing import Optional, List
 
 from pydantic import BaseModel, Field
 
-from schema.invest import ProgressResponse
+from schema.invest import InvestmentResponse
 
 
 class IdeationRequest(BaseModel):
@@ -30,6 +30,5 @@ class IdeationResponse(BaseModel):
     view_count: int
     investment_goal: Optional[int] \
         = Field(..., description="목표 금액 (단위: 만원)")
-    progress: Optional[List[ProgressResponse]] \
+    progress: Optional[List[InvestmentResponse]] \
         = Field(..., description="투자 진행 상황")
-

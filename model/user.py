@@ -8,10 +8,11 @@ from database import Base
 
 class RoleEnum(enum.Enum):
     USER = "유저"
-    ADMIN = "관리자"
+    INVESTOR = "투자자"
     LAWYER = "변호사"
     ACCOUNTANT = "회계사"
     TAX_ADVISOR = "세무사"
+    ADMIN = "관리자"
 
 
 class User(Base):
@@ -20,6 +21,7 @@ class User(Base):
     name = Column(String, index=True)
     email = Column(String, index=True)
     _password = Column("password", String)
+    role = Column(String, default=RoleEnum.USER.value)
 
     @property
     def password(self):

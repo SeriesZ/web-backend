@@ -1,6 +1,6 @@
 from model.attachment import Comment
 from model.ideation import Ideation
-from model.invest import Progress
+from model.invest import Investment
 from model.user import User
 
 
@@ -89,7 +89,7 @@ class TestModels:
         db_session.add(ideation)
         db_session.commit()
 
-        invest = Progress(
+        invest = Investment(
             ideation_id=ideation.id,
             investor_id=user.id,
             amount=500000,
@@ -99,7 +99,7 @@ class TestModels:
         db_session.commit()
 
         fetched_invest = (
-            db_session.query(Progress).filter_by(id=invest.id).first()
+            db_session.query(Investment).filter_by(id=invest.id).first()
         )
         assert fetched_invest is not None
         assert fetched_invest.amount == 500000

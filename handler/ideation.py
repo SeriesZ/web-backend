@@ -4,6 +4,7 @@ from typing import Dict, List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette import status
 
 from auth import get_current_user
 from common.cache import ttl_cache_with_signature
@@ -63,18 +64,16 @@ async def get_ideation(
         db: AsyncSession = Depends(get_db),
         current_user: User = Depends(get_current_user),
 ):
-    query = select(Ideation).where(Ideation.id is id)
+    query = select(Ideation).where(Ideation.id == id)
     result = await db.execute(query)
     result.fetchone()
     ideation = result.scalars().first()
-    if ideation is None:
+    if not ideation:
         raise HTTPException(status_code=404, detail="Ideation not found")
 
     # view_count를 증가시키는 작업을 비동기로 처리
     asyncio.create_task(increment_view_count(db, id, current_user.id))
-    return IdeationResponse(
-        **ideation.__dict__,
-    )
+    return IdeationResponse.from_orm(ideation)
 
 
 @router.post("/ideations", response_model=IdeationResponse)
@@ -90,9 +89,7 @@ async def create_ideation(
     db.add(ideation)
     await db.commit()
     await db.refresh(ideation)
-    return IdeationResponse(
-        **ideation.__dict__,
-    )
+    return IdeationResponse.from_orm(ideation)
 
 
 @router.put("/ideations/{id}", response_model=IdeationResponse)
@@ -103,30 +100,28 @@ async def update_ideation(
         current_user: User = Depends(get_current_user),
 ):
     query = select(Ideation).where(
-        Ideation.id is id, Ideation.user_id is current_user.id
+        Ideation.id == id, Ideation.user_id == current_user.id
     )
     result = await db.execute(query)
     ideation = result.scalars().first()
 
     if ideation.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Permission denied")
-    if ideation is None:
+    if not ideation:
         raise HTTPException(status_code=404, detail="Ideation not found")
 
     update_query = (
         update(Ideation)
-        .where(Ideation.id is id)
+        .where(Ideation.id == id)
         .values(**request.dict(exclude_unset=True))
     )
     await db.execute(update_query)
     await db.commit()
     await db.refresh(ideation)
-    return IdeationResponse(
-        **ideation.__dict__,
-    )
+    return IdeationResponse.from_orm(ideation)
 
 
-@router.delete("/ideations/{id}", status_code=204)
+@router.delete("/ideations/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_ideation(
         id: str,
         db: AsyncSession = Depends(get_db),
@@ -140,21 +135,21 @@ async def delete_ideation(
     """
     # 아이디어 조회
     query = select(Ideation).where(
-        Ideation.id is id, Ideation.user_id is current_user.id
+        Ideation.id == id, Ideation.user_id == current_user.id
     )
     result = await db.execute(query)
     ideation = result.scalars().first()
 
     # 아이디어가 없거나 사용자의 권한이 없는 경우 처리
-    if ideation is None:
+    if not ideation:
         raise HTTPException(status_code=404, detail="Ideation not found")
 
     # 상태를 in_use = False로 변경
     await db.execute(
         update(Ideation)
-        .where(Ideation.id is id, Ideation.user_id is current_user.id)
+        .where(Ideation.id == id, Ideation.user_id == current_user.id)
         .values(in_use=False)
     )
 
     await db.commit()
-    return {"message": "Ideation marked as deleted"}
+    return {"message": "아이디어가 성공적으로 삭제되었습니다."}

@@ -15,10 +15,12 @@ class Investor(Base):
     investment_count = Column(Integer)  # 투자 횟수
 
 
-class Progress(Base):
-    __tablename__ = "progress"
+class Investment(Base):
+    __tablename__ = "investments"
     ideation_id = Column(Integer)  # 연결된 id
     investor_id = Column(Integer)  # 투자자 id
+    amount = Column(Integer)  # 투자 금액
+    approval_status = Column(Boolean)  # 투자 승인 여부
 
     ideation = relationship(
         "Ideation",
@@ -33,5 +35,24 @@ class Progress(Base):
         lazy="joined",
     )
 
-    amount = Column(Integer)  # 투자 금액
-    approval_status = Column(Boolean)  # 투자 승인 여부
+
+# 사용자와 투자자의 관계
+class InvestorUser(Base):
+    __tablename__ = 'investor_user'
+
+    user_id = Column(Integer, primary_key=True)
+    investor_id = Column(Integer, primary_key=True)
+
+    # 사용자와 투자자에 대한 관계 설정
+    user = relationship(
+        "User",
+        primaryjoin="User.id == InvestorUser.user_id",
+        foreign_keys="[InvestorUser.user_id]",
+        lazy="joined",
+    )
+    investor = relationship(
+        "Investor",
+        primaryjoin="Investor.id == InvestorUser.investor_id",
+        foreign_keys="[InvestorUser.investor_id]",
+        lazy="joined",
+    )
