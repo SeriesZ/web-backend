@@ -19,6 +19,15 @@ from service.ideation import fetch_themes
 router = APIRouter(tags=["아이디어"])
 
 
+@router.get("/themes", response_model=List[ThemeResponse])
+async def get_themes(
+        theme_name: Optional[str] = None,
+        db: AsyncSession = Depends(get_db),
+):
+    themes = await fetch_themes(db, theme_name)
+    return [ThemeResponse.model_validate(theme) for theme in themes]
+
+
 # TODO order 적용, 전체 ideation 조회
 @router.get(
     "/ideation/themes", response_model=Dict[str, List[IdeationResponse]]
