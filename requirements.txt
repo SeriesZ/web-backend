@@ -8,3 +8,7 @@ bcrypt==4.0.1
 casbin
 casbin_async_sqlalchemy_adapter
 python-dotenv
+pytz
+python-jose
+passlib
+python-multipart
