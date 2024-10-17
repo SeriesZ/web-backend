@@ -6,7 +6,6 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from starlette import status
-from starlette.responses import Response
 
 from auth import get_current_user
 from database import enforcer, get_db
@@ -22,7 +21,7 @@ router = APIRouter(tags=["아이디어"])
 
 # TODO order 적용, 전체 ideation 조회
 @router.get(
-    "/ideations/themes", response_model=Dict[str, List[IdeationResponse]]
+    "/ideation/themes", response_model=Dict[str, List[IdeationResponse]]
 )
 async def fetch_ideation_list_by_themes(
         theme_name: Optional[str] = None,
@@ -81,7 +80,7 @@ async def fetch_ideation_list_by_themes(
     return theme_ideations
 
 
-@router.get("/ideations/{ideation_id}", response_model=IdeationResponse)
+@router.get("/ideation/{ideation_id}", response_model=IdeationResponse)
 async def get_ideation(
         ideation_id: str,
         db: AsyncSession = Depends(get_db),
@@ -106,7 +105,7 @@ async def get_ideation(
 
 
 # TODO form에서 file upload 따로
-@router.post("/ideations", response_model=IdeationResponse)
+@router.post("/ideation", status_code=status.HTTP_201_CREATED)
 async def create_ideation(
         request: IdeationRequest,
         db: AsyncSession = Depends(get_db),
@@ -119,16 +118,14 @@ async def create_ideation(
     db.add(ideation)
     await db.commit()
     await db.refresh(ideation)
-
     await enforcer.add_policies(
         [
             (current_user.id, ideation.id, "write"),
         ]
     )
-    return IdeationResponse.model_validate(ideation)
 
 
-@router.put("/ideations/{ideation_id}", response_model=IdeationResponse)
+@router.put("/ideation/{ideation_id}", status_code=status.HTTP_200_OK)
 async def update_ideation(
         ideation_id: str,
         request: IdeationRequest,
@@ -148,9 +145,6 @@ async def update_ideation(
 
     for key, value in request.dict(exclude_unset=True).items():
         setattr(ideation, key, value)
-    await db.commit()
-    await db.refresh(ideation)
-    return IdeationResponse.model_validate(ideation)
 
 
 @router.delete(
@@ -167,10 +161,5 @@ async def delete_ideation(
     result = await db.execute(
         delete(Ideation).where(Ideation.id == ideation_id)
     )
-    ideation = result.scalars().first()
-
-    if not ideation:
+    if not result.scalars().first():
         raise HTTPException(status_code=404, detail="Ideation not found")
-
-    # FIXME commit 없이 되는지 확인
-    return Response(status_code=status.HTTP_204_NO_CONTENT)

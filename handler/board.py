@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.exceptions import HTTPException
-from starlette.responses import Response
 
 from auth import get_current_user
 from database import get_db
@@ -24,7 +23,8 @@ async def read_boards(
     boards = await db.execute(
         select(Board).offset(offset).limit(limit)
     )
-    return boards.scalars().all()
+    boards = boards.scalars().all()
+    return [BoardResponse.model_validate(b) for b in boards]
 
 
 @router.get("/board/{id}", response_model=BoardResponse)
@@ -38,7 +38,7 @@ async def read_board(
     board = board.scalars().first()
     if board is None:
         raise HTTPException(status_code=404, detail="Board not found")
-    return board
+    return BoardResponse.model_validate(board)
 
 
 @router.post("/board/", status_code=201)
@@ -56,8 +56,6 @@ async def create_board(
         content=board.content,
     )
     db.add(board)
-    await db.refresh(board)
-    return Response(status_code=201)
 
 
 @router.put("/board/{id}", status_code=200)
@@ -77,7 +75,6 @@ async def update_board(
     )
     if result.rowcount == 0:
         raise HTTPException(status_code=404, detail="Board not found")
-    return Response(status_code=200)
 
 
 @router.delete("/board/{id}", status_code=204)
@@ -94,4 +91,3 @@ async def delete_board(
     )
     if result.rowcount == 0:
         raise HTTPException(status_code=404, detail="Board not found")
-    return Response(status_code=204)

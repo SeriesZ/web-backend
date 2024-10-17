@@ -1,7 +1,6 @@
 from typing import List
 
 from fastapi import APIRouter, Depends
-from fastapi.openapi.models import Response
 from sqlalchemy import delete, update, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
@@ -16,7 +15,7 @@ from schema.invest import InvestmentRequest, InvestorRequest, InvestorResponse
 router = APIRouter(tags=["투자"])
 
 
-@router.post("/investments", status_code=status.HTTP_201_CREATED)
+@router.post("/investment", status_code=status.HTTP_201_CREATED)
 async def create_investment(
         request: InvestmentRequest,
         db: AsyncSession = Depends(get_db),
@@ -24,7 +23,6 @@ async def create_investment(
 ):
     investment = Investment(**request.dict())
     db.add(investment)
-    await db.commit()
     await db.refresh(investment)
     await enforcer.add_policies(
         [
@@ -32,10 +30,9 @@ async def create_investment(
             (current_user.group_id, investment.id, "write"),
         ]
     )
-    return Response(status_code=status.HTTP_201_CREATED)
 
 
-@router.put("/investments/{investment_id}", status_code=status.HTTP_200_OK)
+@router.put("/investment/{investment_id}", status_code=status.HTTP_200_OK)
 async def update_investment(
         investment_id: str,
         request: InvestmentRequest,
@@ -52,11 +49,10 @@ async def update_investment(
     )
     if result.rowcount == 0:
         raise HTTPException(status_code=404, detail="Investment not found")
-    return Response(status_code=status.HTTP_200_OK)
 
 
 @router.delete(
-    "/investments/{investment_id}", status_code=status.HTTP_204_NO_CONTENT
+    "/investment/{investment_id}", status_code=status.HTTP_204_NO_CONTENT
 )
 async def delete_investment(
         investment_id: str,
@@ -72,7 +68,6 @@ async def delete_investment(
 
     if result.rowcount == 0:
         raise HTTPException(status_code=404, detail="Investment not found")
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get("/investors", response_model=List[InvestorResponse])
@@ -81,7 +76,9 @@ async def get_investors(
         limit: int = 10,
         db: AsyncSession = Depends(get_db),
 ):
-    investors = await db.execute(select(Investor))
+    investors = await db.execute(
+        select(Investor).offset(offset).limit(limit)
+    )
     investors = investors.scalars().all()
     return [InvestorResponse.model_validate(i) for i in investors]
 
@@ -108,14 +105,12 @@ async def create_investor(
         # 투자자 생성 및 추가
         investor = Investor(**request.dict())
         db.add(investor)
-        await db.flush()
         await db.refresh(investor)
     await enforcer.add_policies(
         [
             (investor.id, investor.id, "write"),  # group 사용자 권한
         ]
     )
-    return Response(status_code=status.HTTP_201_CREATED)
 
 
 @router.put("/investor/{investor_id}", status_code=status.HTTP_200_OK)
@@ -135,7 +130,6 @@ async def update_investor(
     )
     if result.rowcount == 0:
         raise HTTPException(status_code=404, detail="Investor not found")
-    return Response(status_code=status.HTTP_200_OK)
 
 
 @router.delete(
@@ -154,4 +148,3 @@ async def delete_investor(
     )
     if result.rowcount == 0:
         raise HTTPException(status_code=404, detail="Investor not found")
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
