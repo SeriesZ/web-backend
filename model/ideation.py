@@ -1,7 +1,15 @@
-from sqlalchemy import Column, DateTime, Integer, String
+import enum
+
+from sqlalchemy import Column, DateTime, Integer, String, Enum
 from sqlalchemy.orm import relationship
 
 from database import Base
+
+
+class Status(enum.Enum):
+    BEFORE_START = "시작전"
+    IN_PROGRESS = "진행중"
+    END = "종료"
 
 
 # 아이디어 테마
@@ -20,9 +28,10 @@ class Ideation(Base):
     title = Column(String)  # 제목
     content = Column(String)  # 아이디어 설명
     image = Column(String)  # 대표이미지 url
+    presentation_url = Column(String)  # 사업설명회 url
     presentation_date = Column(DateTime(timezone=True))  # 사업설명회 날짜
     close_date = Column(DateTime)  # 라운드 종료 날짜
-    status = Column(String)  # 상태 (예: 진행중, 종료)
+    status = Column(Enum(Status), default=Status.BEFORE_START)  # 상태 (예: 진행중, 종료)
     view_count = Column(Integer, default=0)  # 조회수
 
     theme_id = Column(String)  # 테마

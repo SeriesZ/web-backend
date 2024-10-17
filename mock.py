@@ -4,7 +4,8 @@ from datetime import datetime, timedelta
 from database import AsyncSessionLocal
 from model.attachment import Attachment, Comment
 from model.board import Board, BoardCategory
-from model.ideation import Ideation, Theme
+from model.financial import Financial
+from model.ideation import Ideation, Theme, Status
 from model.invest import Investment, Investor
 from model.user import Group, RoleEnum, User
 
@@ -20,6 +21,7 @@ async def create_mock():
                 mock_data += get_mock_attachment()
                 mock_data += get_mock_comment()
                 mock_data += get_mock_board()
+                mock_data += get_mock_financial()
                 session.add_all(mock_data)
                 await session.commit()
             except Exception as e:
@@ -298,7 +300,7 @@ def get_mock_ideation():
             image="https://www.publicdomainpictures.net/pictures/320000/nahled/farming.jpg",  # 스마트 농업 관련 이미지
             presentation_date=datetime.now() + timedelta(days=30),
             close_date=datetime.now() + timedelta(days=60),
-            status="진행중",
+            status=Status.IN_PROGRESS,
             view_count=0,
             theme_id="theme_1",  # 올바른 theme_id
             user_id="user_1",
@@ -317,7 +319,7 @@ def get_mock_ideation():
             # 친환경 농업 이미지
             presentation_date=datetime.now() + timedelta(days=30),
             close_date=datetime.now() + timedelta(days=60),
-            status="진행중",
+            status=Status.IN_PROGRESS,
             view_count=0,
             theme_id="theme_1",
             user_id="user_1",
@@ -335,7 +337,7 @@ def get_mock_ideation():
             image="https://www.publicdomainpictures.net/pictures/290000/nahled/farm-technology.jpg",  # 농업 드론 이미지
             presentation_date=datetime.now() + timedelta(days=40),
             close_date=datetime.now() + timedelta(days=70),
-            status="진행중",
+            status=Status.IN_PROGRESS,
             view_count=0,
             theme_id="theme_1",
             user_id="user_1",
@@ -353,7 +355,7 @@ def get_mock_ideation():
             image="https://www.publicdomainpictures.net/pictures/300000/nahled/agricultural-fields.jpg",  # 농업 데이터 이미지
             presentation_date=datetime.now() + timedelta(days=25),
             close_date=datetime.now() + timedelta(days=55),
-            status="진행중",
+            status=Status.IN_PROGRESS,
             view_count=0,
             theme_id="theme_1",
             user_id="user_1",
@@ -371,7 +373,7 @@ def get_mock_ideation():
             image="https://www.publicdomainpictures.net/pictures/340000/nahled/farm-robotics.jpg",  # 농업 로봇 이미지
             presentation_date=datetime.now() + timedelta(days=35),
             close_date=datetime.now() + timedelta(days=65),
-            status="진행중",
+            status=Status.IN_PROGRESS,
             view_count=0,
             theme_id="theme_1",
             user_id="user_1",
@@ -391,7 +393,7 @@ def get_mock_ideation():
             # 어업 관련 이미지
             presentation_date=datetime.now() + timedelta(days=20),
             close_date=datetime.now() + timedelta(days=50),
-            status="진행중",
+            status=Status.IN_PROGRESS,
             view_count=0,
             theme_id="theme_2",  # 어업 테마
             user_id="user_1",
@@ -409,7 +411,7 @@ def get_mock_ideation():
             image="https://www.publicdomainpictures.net/pictures/220000/nahled/fish-farming.jpg",  # 친환경 어업 이미지
             presentation_date=datetime.now() + timedelta(days=40),
             close_date=datetime.now() + timedelta(days=70),
-            status="진행중",
+            status=Status.IN_PROGRESS,
             view_count=0,
             theme_id="theme_2",
             user_id="user_1",
@@ -526,5 +528,66 @@ def get_mock_board():
             그러므로 많은 관심 부탁드립니다.
             """,
             created_at=datetime(2024, 3, 1),
+        ),
+    ]
+
+
+def get_mock_financial():
+    return [
+        Financial(
+            ideation_id="Ideation_1",
+            direct_material=10000.0,  # 직접재료비
+            direct_expense=5000.0,  # 직접경비
+            item_input=2000.0,  # 항목입력
+            direct_labor=4000.0,  # 직접노무비
+            manufacturing_cost=3000.0,  # 제조간접비
+            profit_rate=15.0,  # 이익률
+            sale_price=30000.0,  # 판매가격 (소비자가격)
+
+            salary=60000.0,  # 급여
+            office_rent=12000.0,  # 사무실 임차료
+            ad_cost=8000.0,  # 광고선전비
+            business_expense=5000.0,  # 업무추진비
+            maintenance_cost=3000.0,  # 접대비
+            contingency=2000.0,  # 예비비용
+            total_expense=92000.0,  # 판관비 계 (연비용)
+
+            salary_increase_rate=5.0,  # 급여 인상율
+            office_rent_increase_rate=3.0,  # 사무실 임차료 인상율
+            ad_cost_increase_rate=4.0,  # 광고선전비 인상율
+            business_expense_increase_rate=2.0,  # 업무추진비 인상율
+            maintenance_cost_increase_rate=1.5,  # 접대비 인상율
+            contingency_increase_rate=2.0,  # 예비비 인상율
+
+            trade_counts=[100, 150, 200, 250, 300, 350, 400, 450, 500, 550],  # 거래발생 수 (연차별 리스트)
+            employee_counts=[10, 12, 14, 16, 18, 20, 22, 24, 26, 28]  # 직원 수 (연차별 리스트)
+        ),
+        Financial(
+            ideation_id="Ideation_2",
+            direct_material=15000.0,  # 직접재료비
+            direct_expense=7000.0,  # 직접경비
+            item_input=2500.0,  # 항목입력
+            direct_labor=4500.0,  # 직접노무비
+            manufacturing_cost=4000.0,  # 제조간접비
+            profit_rate=12.0,  # 이익률
+            sale_price=35000.0,  # 판매가격 (소비자가격)
+
+            salary=70000.0,  # 급여
+            office_rent=15000.0,  # 사무실 임차료
+            ad_cost=9000.0,  # 광고선전비
+            business_expense=5500.0,  # 업무추진비
+            maintenance_cost=3200.0,  # 접대비
+            contingency=2500.0,  # 예비비용
+            total_expense=105200.0,  # 판관비 계 (연비용)
+
+            salary_increase_rate=6.0,  # 급여 인상율
+            office_rent_increase_rate=4.0,  # 사무실 임차료 인상율
+            ad_cost_increase_rate=3.5,  # 광고선전비 인상율
+            business_expense_increase_rate=2.5,  # 업무추진비 인상율
+            maintenance_cost_increase_rate=1.8,  # 접대비 인상율
+            contingency_increase_rate=2.2,  # 예비비 인상율
+
+            trade_counts=[120, 180, 240, 300, 360, 420, 480, 540, 600, 660],  # 거래발생 수 (연차별 리스트)
+            employee_counts=[11, 13, 15, 17, 19, 21, 23, 25, 27, 29]  # 직원 수 (연차별 리스트)
         ),
     ]
