@@ -30,7 +30,12 @@ AsyncSessionLocal = sessionmaker(
 
 async def get_db():
     async with AsyncSessionLocal() as session:
-        yield session
+        try:
+            yield session
+            await session.commit()
+        except Exception as e:
+            await session.rollback()
+            raise e
 
 
 async def init_db():

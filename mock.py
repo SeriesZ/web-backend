@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 
 from database import AsyncSessionLocal
 from model.attachment import Attachment, Comment
+from model.board import Board, BoardCategory
 from model.ideation import Ideation, Theme
 from model.invest import Investment, Investor
 from model.user import Group, RoleEnum, User
@@ -18,6 +19,7 @@ async def create_mock():
                 mock_data += get_mock_ideation()
                 mock_data += get_mock_attachment()
                 mock_data += get_mock_comment()
+                mock_data += get_mock_board()
                 session.add_all(mock_data)
                 await session.commit()
             except Exception as e:
@@ -241,7 +243,7 @@ def get_mock_users():
         id="user_1",
         name="admin",
         email="admin@series0.com",
-        role=RoleEnum.ADMIN.value,
+        role=RoleEnum.ADMIN,
         expertises="관리",
         group_id="group_1",
     )
@@ -250,7 +252,7 @@ def get_mock_users():
         id="user_2",
         name="황젠슨",
         email="test1@series0.com",
-        role=RoleEnum.INVESTOR.value,
+        role=RoleEnum.INVESTOR,
         expertises="핀테크,web3,블록체인",
         group_id="group_1",
     )
@@ -259,7 +261,7 @@ def get_mock_users():
         id="user_3",
         name="이사수",
         email="test2@series0.com",
-        role=RoleEnum.INVESTOR.value,
+        role=RoleEnum.INVESTOR,
         expertises="디자인,마케팅,서비스기획",
         group_id="group_1",
     )
@@ -268,7 +270,7 @@ def get_mock_users():
         id="user_4",
         name="올트먼",
         email="test3@series0.com",
-        role=RoleEnum.INVESTOR.value,
+        role=RoleEnum.INVESTOR,
         expertises="콘텐츠,AL,딥테크",
         group_id="group_1",
     )
@@ -475,5 +477,54 @@ def get_mock_comment():
             rating=5,
             related_id="comment_2",
             user_id="user_4",
+        ),
+    ]
+
+
+def get_mock_board():
+    return [
+        Board(
+            id="board_1",
+            category=BoardCategory.NOTICE,
+            title="시리즈제로 리얼 리뷰 콘테스트 수상자 발표",
+            content="""
+            시리즈제로 리얼 리뷰 콘테스트 수상자가 발표되었습니다. 수상자는 1등부터 3등까지 총 3명입니다.
+            1등은 100만원, 2등은 50만원, 3등은 30만원의 상금을 받게 됩니다.
+            수상자들은 7월 1일까지 연락을 주시기 
+            """,
+            created_at=datetime(2024, 6, 25),
+        ),
+        Board(
+            id="board_2",
+            category=BoardCategory.EVENT,
+            title="국내 최초 포토샵 팝업스토어! 포토샵 AI로 세계일주!",
+            content="""
+            최초의 포토샵 팝업스토어가 오픈합니다. 포토샵 AI로 세계일주를 떠나는 이벤트가 진행됩니다.
+            7월 1일까지 진행되니 많은 관심 부탁드립니다.
+            """,
+            created_at=datetime(2024, 6, 24),
+        ),
+        Board(
+            id="board_3",
+            category=BoardCategory.EVENT,
+            title="'리빙크리에이터' 단 3일간 최대 혜택 (2.16-2.18)",
+            content="""
+            단 3일간 리빙크리에이터에서 최대 혜택을 드립니다. 2월 16일부터 2월 18일까지 진행되니 많은 관심 부탁드립니다.
+            오늘 하루만 무료배송 혜택도 놓치지 마세요!
+            2월 16일부터 2월 18일까지 진행되니 많은 관심 부탁드립니다.
+            """,
+            created_at=datetime(2024, 5, 24),
+        ),
+        Board(
+            id="board_4",
+            category=BoardCategory.PRESS_RELEASE,
+            title="시리즈제로 라이콘 육성을 위한 '시리즈제로 넥스트브랜드' 쇼케이스 개최",
+            content="""
+            시리즈제로 라이콘 육성을 위한 '시리즈제로 넥스트브랜드' 쇼케이스가 개최됩니다.
+            7월 1일까지 진행되니 많은 관심 부탁드립니다.
+            이번 쇼케이스에서는 시리즈제로 라이콘 육성을 위한 다양한 프로그램이 준비되어 있습니다.
+            그러므로 많은 관심 부탁드립니다.
+            """,
+            created_at=datetime(2024, 3, 1),
         ),
     ]

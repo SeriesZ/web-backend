@@ -2,14 +2,16 @@ from pydantic import BaseModel
 
 
 class BoardRequest(BaseModel):
+    category: str
     title: str
-    description: str = None
+    content: str
 
 
 class BoardResponse(BaseModel):
-    id: int
+    id: str
+    category: str
     title: str
-    description: str = None
+    content: str
 
     class Config:
         from_attributes = True

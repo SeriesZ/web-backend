@@ -1,6 +1,6 @@
 import enum
 
-from sqlalchemy import JSON, Column, String
+from sqlalchemy import JSON, Column, String, Enum
 from sqlalchemy.orm import relationship
 
 from database import Base
@@ -22,7 +22,7 @@ class User(Base):
     name = Column(String, index=True)
     email = Column(String, index=True, unique=True)
     _password = Column("password", String)
-    role = Column(String, default=RoleEnum.USER.value)
+    role = Column(Enum(RoleEnum), default=RoleEnum.USER)
     expertises = Column(JSON, nullable=True)
 
     group_id = Column(String, nullable=True)
