@@ -14,7 +14,7 @@ from schema.board import BoardRequest, BoardResponse
 router = APIRouter(tags=["공지사항/게시판"])
 
 
-@router.get("/boards/", response_model=List[BoardResponse])
+@router.get("/boards", response_model=List[BoardResponse])
 async def read_boards(
     offset: int = 0,
     limit: int = 10,
@@ -37,7 +37,7 @@ async def read_board(
     return BoardResponse.model_validate(board)
 
 
-@router.post("/board/", status_code=201)
+@router.post("/board", status_code=201)
 async def create_board(
     board: BoardRequest,
     db: AsyncSession = Depends(get_db),
