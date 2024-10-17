@@ -1,6 +1,6 @@
 import enum
 
-from sqlalchemy import JSON, Column, String, Enum
+from sqlalchemy import JSON, Column, Enum, String
 from sqlalchemy.orm import relationship
 
 from database import Base

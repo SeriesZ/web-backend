@@ -19,8 +19,8 @@ router = APIRouter(tags=["유저"])
 
 @router.post("/login")
 async def login(
-        form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-        db: AsyncSession = Depends(get_db),
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    db: AsyncSession = Depends(get_db),
 ) -> Token:
     user = await authenticate_user(
         email=form_data.username,
@@ -62,8 +62,8 @@ async def reset_password():
 
 @router.post("/register", response_model=UserResponse)
 async def create_user(
-        request: UserRequest,
-        db: AsyncSession = Depends(get_db),
+    request: UserRequest,
+    db: AsyncSession = Depends(get_db),
 ):
     db_user = User(
         name=request.name,

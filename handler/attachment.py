@@ -18,8 +18,8 @@ router = APIRouter(tags=["코멘트"])
 
 @router.get("/attachment/{id}", response_model=List[AttachmentResponse])
 async def get_attachments(
-        id: str,
-        db: AsyncSession = Depends(get_db),
+    id: str,
+    db: AsyncSession = Depends(get_db),
 ):
     attachments = await db.execute(
         select(Attachment).where(Attachment.related_id == id)
@@ -30,8 +30,8 @@ async def get_attachments(
 
 @router.get("/comment/{id}", response_model=List[CommentResponse])
 async def get_comments(
-        id: str,
-        db: AsyncSession = Depends(get_db),
+    id: str,
+    db: AsyncSession = Depends(get_db),
 ):
     comments = await db.execute(
         select(Comment).where(Comment.related_id == id)
@@ -42,9 +42,9 @@ async def get_comments(
 
 @router.post("/comment")
 async def create_comment(
-        comment: CommentRequest,
-        db: AsyncSession = Depends(get_db),
-        current_user: User = Depends(get_current_user),
+    comment: CommentRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     comment = Comment(
         **comment.dict(),
@@ -60,17 +60,15 @@ async def create_comment(
 
 @router.put("/comment/{id}", response_model=CommentResponse)
 async def update_comment(
-        id: str,
-        request: CommentRequest,
-        db: AsyncSession = Depends(get_db),
-        current_user: User = Depends(get_current_user),
+    id: str,
+    request: CommentRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     if not enforcer.enforce(current_user.id, id, "write"):
         raise HTTPException(status_code=403, detail="Permission denied")
 
-    comment = await db.execute(
-        select(Comment).where(Comment.id == id)
-    )
+    comment = await db.execute(select(Comment).where(Comment.id == id))
     comment = comment.scalar_one()
     if not comment:
         raise HTTPException(status_code=404, detail="Ideation not found")
@@ -84,15 +82,13 @@ async def update_comment(
 
 @router.delete("/comment/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_comment(
-        id: str,
-        db: AsyncSession = Depends(get_db),
-        current_user: User = Depends(get_current_user),
+    id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     if not enforcer.enforce(current_user.id, id, "write"):
         raise HTTPException(status_code=403, detail="Permission denied")
 
-    comment = await db.execute(
-        delete(Comment).where(Comment.id == id)
-    )
+    comment = await db.execute(delete(Comment).where(Comment.id == id))
     if not comment.scalar_one():
         raise HTTPException(status_code=404, detail="Ideation not found")

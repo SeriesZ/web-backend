@@ -1,6 +1,6 @@
 import enum
 
-from sqlalchemy import Column, DateTime, Integer, String, Enum
+from sqlalchemy import Column, DateTime, Enum, Integer, String
 from sqlalchemy.orm import relationship
 
 from database import Base
@@ -31,7 +31,9 @@ class Ideation(Base):
     presentation_url = Column(String)  # 사업설명회 url
     presentation_date = Column(DateTime(timezone=True))  # 사업설명회 날짜
     close_date = Column(DateTime)  # 라운드 종료 날짜
-    status = Column(Enum(Status), default=Status.BEFORE_START)  # 상태 (예: 진행중, 종료)
+    status = Column(
+        Enum(Status), default=Status.BEFORE_START
+    )  # 상태 (예: 진행중, 종료)
     view_count = Column(Integer, default=0)  # 조회수
 
     theme_id = Column(String)  # 테마

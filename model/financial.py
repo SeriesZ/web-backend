@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Float, JSON, String
+from sqlalchemy import JSON, Column, Float, String
 
 from database import Base
 

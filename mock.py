@@ -5,7 +5,7 @@ from database import AsyncSessionLocal
 from model.attachment import Attachment, Comment
 from model.board import Board, BoardCategory
 from model.financial import Financial
-from model.ideation import Ideation, Theme, Status
+from model.ideation import Ideation, Status, Theme
 from model.invest import Investment, Investor
 from model.user import Group, RoleEnum, User
 
@@ -543,7 +543,6 @@ def get_mock_financial():
             manufacturing_cost=3000.0,  # 제조간접비
             profit_rate=15.0,  # 이익률
             sale_price=30000.0,  # 판매가격 (소비자가격)
-
             salary=60000.0,  # 급여
             office_rent=12000.0,  # 사무실 임차료
             ad_cost=8000.0,  # 광고선전비
@@ -551,16 +550,36 @@ def get_mock_financial():
             maintenance_cost=3000.0,  # 접대비
             contingency=2000.0,  # 예비비용
             total_expense=92000.0,  # 판관비 계 (연비용)
-
             salary_increase_rate=5.0,  # 급여 인상율
             office_rent_increase_rate=3.0,  # 사무실 임차료 인상율
             ad_cost_increase_rate=4.0,  # 광고선전비 인상율
             business_expense_increase_rate=2.0,  # 업무추진비 인상율
             maintenance_cost_increase_rate=1.5,  # 접대비 인상율
             contingency_increase_rate=2.0,  # 예비비 인상율
-
-            trade_counts=[100, 150, 200, 250, 300, 350, 400, 450, 500, 550],  # 거래발생 수 (연차별 리스트)
-            employee_counts=[10, 12, 14, 16, 18, 20, 22, 24, 26, 28]  # 직원 수 (연차별 리스트)
+            trade_counts=[
+                100,
+                150,
+                200,
+                250,
+                300,
+                350,
+                400,
+                450,
+                500,
+                550,
+            ],  # 거래발생 수 (연차별 리스트)
+            employee_counts=[
+                10,
+                12,
+                14,
+                16,
+                18,
+                20,
+                22,
+                24,
+                26,
+                28,
+            ],  # 직원 수 (연차별 리스트)
         ),
         Financial(
             ideation_id="Ideation_2",
@@ -571,7 +590,6 @@ def get_mock_financial():
             manufacturing_cost=4000.0,  # 제조간접비
             profit_rate=12.0,  # 이익률
             sale_price=35000.0,  # 판매가격 (소비자가격)
-
             salary=70000.0,  # 급여
             office_rent=15000.0,  # 사무실 임차료
             ad_cost=9000.0,  # 광고선전비
@@ -579,15 +597,35 @@ def get_mock_financial():
             maintenance_cost=3200.0,  # 접대비
             contingency=2500.0,  # 예비비용
             total_expense=105200.0,  # 판관비 계 (연비용)
-
             salary_increase_rate=6.0,  # 급여 인상율
             office_rent_increase_rate=4.0,  # 사무실 임차료 인상율
             ad_cost_increase_rate=3.5,  # 광고선전비 인상율
             business_expense_increase_rate=2.5,  # 업무추진비 인상율
             maintenance_cost_increase_rate=1.8,  # 접대비 인상율
             contingency_increase_rate=2.2,  # 예비비 인상율
-
-            trade_counts=[120, 180, 240, 300, 360, 420, 480, 540, 600, 660],  # 거래발생 수 (연차별 리스트)
-            employee_counts=[11, 13, 15, 17, 19, 21, 23, 25, 27, 29]  # 직원 수 (연차별 리스트)
+            trade_counts=[
+                120,
+                180,
+                240,
+                300,
+                360,
+                420,
+                480,
+                540,
+                600,
+                660,
+            ],  # 거래발생 수 (연차별 리스트)
+            employee_counts=[
+                11,
+                13,
+                15,
+                17,
+                19,
+                21,
+                23,
+                25,
+                27,
+                29,
+            ],  # 직원 수 (연차별 리스트)
         ),
     ]
