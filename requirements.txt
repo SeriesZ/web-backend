@@ -12,3 +12,4 @@ pytz
 python-jose
 passlib
 python-multipart
+hypercorn[trio,h3]
