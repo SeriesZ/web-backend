@@ -1,10 +1,10 @@
 import enum
 
-from sqlalchemy import Column, String
+from sqlalchemy import JSON, Column, String
 from sqlalchemy.orm import relationship
 
-from auth import get_password_hash, verify_password
 from database import Base
+from utils.auth import get_password_hash, verify_password
 
 
 class RoleEnum(enum.Enum):
@@ -20,17 +20,12 @@ class User(Base):
     __tablename__ = "users"
 
     name = Column(String, index=True)
-    email = Column(String, index=True)
+    email = Column(String, index=True, unique=True)
     _password = Column("password", String)
     role = Column(String, default=RoleEnum.USER.value)
-    investor_id = Column(String, nullable=True)
+    expertises = Column(JSON, nullable=True)
 
-    investor = relationship(
-        "Investor",
-        primaryjoin="User.investor_id == Investor.id",
-        foreign_keys="[User.investor_id]",
-        lazy="joined",
-    )
+    group_id = Column(String, nullable=True)
 
     @property
     def password(self):
@@ -42,3 +37,15 @@ class User(Base):
 
     def verify_password(self, plain_password: str) -> bool:
         return verify_password(plain_password, self._password)
+
+
+class Group(Base):
+    __tablename__ = "groups"
+
+    name = Column(String)
+    description = Column(String)
+    image = Column(String)
+
+    users = relationship(
+        "User", primaryjoin="Group.id == foreign(User.group_id)", lazy="joined"
+    )

@@ -1,16 +1,14 @@
-from typing import Optional
-
 from fastapi import APIRouter, Depends
 from fastapi.openapi.models import Response
-from sqlalchemy import update
+from sqlalchemy import delete, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 from starlette.exceptions import HTTPException
 
 from auth import get_current_user
-from database import get_db
+from database import enforcer, get_db
 from model.invest import Investment, Investor
-from model.user import RoleEnum, User
+from model.user import User
 from schema.invest import InvestmentRequest, InvestorRequest
 
 router = APIRouter(tags=["투자"])
@@ -22,16 +20,17 @@ async def create_investment(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    if current_user.role not in (RoleEnum.INVESTOR, RoleEnum.ADMIN):
-        raise HTTPException(
-            status_code=403, detail="투자자 권한이 필요합니다."
-        )
-
     investment = Investment(**request.dict())
     db.add(investment)
     await db.commit()
     await db.refresh(investment)
-    return {"message": "투자가 성공적으로 등록되었습니다."}
+    await enforcer.add_policies(
+        [
+            (current_user.id, investment.id, "write"),
+            (current_user.group_id, investment.id, "write"),
+        ]
+    )
+    return Response(status_code=status.HTTP_201_CREATED)
 
 
 @router.put("/investments/{investment_id}", status_code=status.HTTP_200_OK)
@@ -41,24 +40,17 @@ async def update_investment(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    clause = [Investment.id == investment_id]
-    if current_user.role == RoleEnum.INVESTOR:
-        clause += [Investment.investor_id == current_user.investor_id]
-    elif current_user.role == RoleEnum.ADMIN:
-        pass
-    else:
-        raise HTTPException(
-            status_code=403, detail="투자자 권한이 필요합니다."
-        )
+    if not enforcer.enforce(current_user.id, investment_id, "write"):
+        raise HTTPException(status_code=403, detail="Permission denied")
 
     result = await db.execute(
         update(Investment)
-        .where(*clause)
+        .where(Investment.id == investment_id)
         .values(**request.dict(exclude_unset=True))
     )
     if result.rowcount == 0:
         raise HTTPException(status_code=404, detail="Investment not found")
-    return {"message": "투자 정보가 성공적으로 수정되었습니다."}
+    return Response(status_code=status.HTTP_200_OK)
 
 
 @router.delete(
@@ -69,22 +61,16 @@ async def delete_investment(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    clause = [Investment.id == investment_id]
-    if current_user.role == RoleEnum.INVESTOR:
-        clause += [Investment.investor_id == current_user.investor_id]
-    elif current_user.role == RoleEnum.ADMIN:
-        pass
-    else:
-        raise HTTPException(
-            status_code=403, detail="투자자 권한이 필요합니다."
-        )
+    if not enforcer.enforce(current_user.id, investment_id, "write"):
+        raise HTTPException(status_code=403, detail="Permission denied")
 
     result = await db.execute(
-        update(Investment).where(*clause).values(in_use=False)
+        delete(Investment).where(Investment.id == investment_id)
     )
+
     if result.rowcount == 0:
         raise HTTPException(status_code=404, detail="Investment not found")
-    return {"message": "투자 정보가 성공적으로 삭제되었습니다."}
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post("/investor", status_code=status.HTTP_201_CREATED)
@@ -93,17 +79,17 @@ async def create_investor(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    check_investor_permission(current_user)
-
     async with db.begin():
         # 투자자 생성 및 추가
         investor = Investor(**request.dict())
         db.add(investor)
         await db.flush()
         await db.refresh(investor)
-        # 사용자 업데이트
-        current_user.investor_id = investor.id
-
+    await enforcer.add_policies(
+        [
+            (investor.id, investor.id, "write"),  # group 사용자 권한
+        ]
+    )
     return Response(status_code=status.HTTP_201_CREATED)
 
 
@@ -114,7 +100,8 @@ async def update_investor(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    check_investor_permission(current_user, investor_id=investor_id)
+    if not enforcer.enforce(current_user.group_id, investor_id, "write"):
+        raise HTTPException(status_code=403, detail="Permission denied")
 
     result = await db.execute(
         update(Investor)
@@ -134,26 +121,12 @@ async def delete_investor(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    check_investor_permission(current_user, investor_id=investor_id)
+    if not enforcer.enforce(current_user.group_id, investor_id, "write"):
+        raise HTTPException(status_code=403, detail="Permission denied")
 
     result = await db.execute(
-        update(Investor).where(Investor.id == investor_id).values(in_use=False)
+        delete(Investor).where(Investor.id == investor_id)
     )
     if result.rowcount == 0:
         raise HTTPException(status_code=404, detail="Investor not found")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
-def check_investor_permission(
-    current_user: User, investor_id: Optional[str] = None
-):
-    if current_user.role == RoleEnum.ADMIN:
-        return
-    if current_user.role != RoleEnum.INVESTOR:
-        raise HTTPException(
-            status_code=403, detail="투자자 권한이 필요합니다."
-        )
-    if investor_id and current_user.investor_id != investor_id:
-        raise HTTPException(
-            status_code=403, detail="해당 투자사에 대한 권한이 없습니다."
-        )

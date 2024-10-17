@@ -7,29 +7,19 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt
 from jwt import InvalidTokenError
-from passlib.context import CryptContext
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
-from schema.token import TokenData
+from model.user import User
+from schema.token import UserToken
 
 load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = float(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
-
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
-
-
-def get_password_hash(password):
-    return pwd_context.hash(password)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
 async def get_user(db: AsyncSession, email: str):
@@ -51,9 +41,9 @@ async def authenticate_user(
 
 
 def create_access_token(
-    data: dict, expires_delta: Union[timedelta, None] = None
+    data: UserToken, expires_delta: Union[timedelta, None] = None
 ):
-    to_encode = data.copy()
+    to_encode = data.dict()
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
@@ -65,28 +55,28 @@ def create_access_token(
 
 async def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)],
-    db: AsyncSession = Depends(get_db),
 ):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
-            raise credentials_exception
-        token_data = TokenData(email=email)
+        token_data = UserToken(
+            id=payload.get("id"),
+            name=payload.get("name"),
+            email=payload.get("email"),
+            role=payload.get("role"),
+            group_id=payload.get("group_id"),
+        )
+        UserToken.validate(token_data)
     except InvalidTokenError:
-        raise credentials_exception
-    user = await get_user(db, email=token_data.email)
-    if user is None:
-        raise credentials_exception
-    return user
-
-
-async def get_current_active_user(current_user=Depends(get_current_user)):
-    if not current_user.in_use:
-        raise HTTPException(status_code=400, detail="Inactive user")
-    return current_user
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    # 부하 문제로 user 조회를 제거
+    return User(
+        id=token_data.id,
+        name=token_data.name,
+        email=token_data.email,
+        role=token_data.role,
+        group_id=token_data.group_id,
+    )

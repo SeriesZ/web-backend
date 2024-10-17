@@ -1,5 +1,6 @@
 from typing import AsyncGenerator
 
+import casbin_sqlalchemy_adapter
 import pytest
 from httpx import AsyncClient
 from sqlalchemy import StaticPool, create_engine
@@ -18,6 +19,8 @@ def db_session():
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
+    adapter = casbin_sqlalchemy_adapter.Adapter(engine)
+    adapter.create_table()
     TestingSessionLocal = sessionmaker(
         autocommit=False, autoflush=False, bind=engine
     )
@@ -82,11 +85,11 @@ async def create_user_and_get_auth_token(
 ):
     test_user = {"name": "testuser", "email": email, "password": password}
 
-    response = await client.post("/users/", json=test_user)
+    response = await client.post("/register", json=test_user)
     assert response.status_code == 200, "Failed to create user"
 
     response = await client.post(
-        "/token", data={"username": email, "password": password}
+        "/login", data={"username": email, "password": password}
     )
     assert response.status_code == 200, "Failed to get access token"
     token = response.json()

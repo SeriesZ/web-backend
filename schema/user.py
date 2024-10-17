@@ -13,7 +13,8 @@ class UserResponse(BaseModel):
     id: str
     email: str
     name: str
-    investor_id: Optional[str] = None
+    role: str
+    group_id: Optional[str] = None
 
     class Config:
         from_attributes = True

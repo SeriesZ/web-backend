@@ -60,7 +60,10 @@ class TestModels:
         db_session.commit()
 
         comment = Comment(
-            content="Great idea!", rating=5, related_id=ideation.id, user=user
+            content="Great idea!",
+            rating=5,
+            related_id=ideation.id,
+            user_id=user.id,
         )
         db_session.add(comment)
         db_session.commit()
@@ -105,4 +108,4 @@ class TestModels:
         assert fetched_invest.amount == 500000
         assert fetched_invest.approval_status is True
         assert fetched_invest.ideation_id == ideation.id
-        assert fetched_invest.investor_id == user.id
+        assert fetched_invest.group_id == user.id

@@ -3,6 +3,7 @@ from sqlalchemy import Column, String
 from database import Base
 
 
+# FIXME board로 통합 예정
 # 시리즈 매거진
 class News(Base):
     __tablename__ = "news"

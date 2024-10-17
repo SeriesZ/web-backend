@@ -8,5 +8,9 @@ class Token(BaseModel):
     token_type: str
 
 
-class TokenData(BaseModel):
-    email: Union[str, None] = None
+class UserToken(BaseModel):
+    id: str
+    name: str
+    email: str
+    role: str
+    group_id: Union[str, None] = None

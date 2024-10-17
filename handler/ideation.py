@@ -1,34 +1,37 @@
 from collections import defaultdict
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from starlette import status
 from starlette.responses import Response
 
 from auth import get_current_user
-from common.cache import ttl_cache_with_signature
-from database import get_db
+from database import enforcer, get_db
+from handler.attachment import get_attachments, get_comments
 from model.ideation import Ideation
 from model.user import User
-from schema.ideation import IdeationRequest, IdeationResponse
+from schema.ideation import IdeationRequest, IdeationResponse, ThemeResponse
+from schema.invest import InvestmentResponse
 from service.ideation import fetch_themes
 
 router = APIRouter(tags=["아이디어"])
 
 
-@ttl_cache_with_signature(ttl=60 * 10)
+# TODO order 적용, 전체 ideation 조회
 @router.get(
     "/ideations/themes", response_model=Dict[str, List[IdeationResponse]]
 )
 async def fetch_ideation_list_by_themes(
-    limit: int = 5,
-    db: AsyncSession = Depends(get_db),
+        theme_name: Optional[str] = None,
+        offset: int = 0,
+        limit: int = 10,
+        db: AsyncSession = Depends(get_db),
 ):
     # 모든 고유한 테마를 조회
-    themes_result = await fetch_themes(db)
+    themes_result = await fetch_themes(db, theme_name)
 
     # 1. 서브쿼리: 각 테마별 상위 N개의 id 가져오기
     subquery = (
@@ -41,7 +44,7 @@ async def fetch_ideation_list_by_themes(
             )
             .label("rn"),
         )
-        .where(Ideation.theme.in_(themes_result))
+        .where(Ideation.theme_id.in_([theme.id for theme in themes_result]))
         .subquery()
     )
 
@@ -50,7 +53,8 @@ async def fetch_ideation_list_by_themes(
         select(Ideation)
         .where(
             Ideation.id.in_(
-                select(subquery.c.id).where(subquery.c.rn <= limit)
+                select(subquery.c.id)
+                .where(subquery.c.rn <= offset + limit, subquery.c.rn > offset)
             )
         )
         .options(
@@ -63,22 +67,28 @@ async def fetch_ideation_list_by_themes(
     # 결과를 각 테마별로 그룹화
     theme_ideations = defaultdict(list)
     for ideation in ideations:
-        res = IdeationResponse.model_validate(ideation)
-        theme_ideations[ideation.theme].append(res)
+        theme = ThemeResponse.model_validate(ideation.theme)
+        investments = [
+            InvestmentResponse.model_validate(i) for i in ideation.investments
+        ]
+
+        ideation_props = ideation.__dict__
+        ideation_props["theme"] = theme
+        ideation_props["investments"] = investments
+        res = IdeationResponse.model_validate(ideation_props)
+        theme_ideations[ideation.theme.name].append(res)
 
     return theme_ideations
 
 
 @router.get("/ideations/{ideation_id}", response_model=IdeationResponse)
 async def get_ideation(
-    ideation_id: str,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+        ideation_id: str,
+        db: AsyncSession = Depends(get_db),
+        current_user: User = Depends(get_current_user),
 ):
     ideation = await db.execute(
-        select(Ideation).where(
-            Ideation.id == ideation_id, Ideation.in_use.is_(True)
-        )
+        select(Ideation).where(Ideation.id == ideation_id)
     )
     ideation = ideation.scalars().first()
     if not ideation:
@@ -86,42 +96,53 @@ async def get_ideation(
 
     if current_user.id != ideation.user_id:
         ideation.view_count += 1
-    return IdeationResponse.model_validate(ideation)
+
+    result = dict(
+        **ideation.__dict__,
+        attachments=await get_attachments(ideation_id, db),
+        comments=await get_comments(ideation_id, db),
+    )
+    return IdeationResponse.model_validate(result)
 
 
+# TODO form에서 file upload 따로
 @router.post("/ideations", response_model=IdeationResponse)
 async def create_ideation(
-    request: IdeationRequest,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+        request: IdeationRequest,
+        db: AsyncSession = Depends(get_db),
+        current_user: User = Depends(get_current_user),
 ):
     ideation = Ideation(
         **request.dict(),
-        user=current_user,
+        user_id=current_user.id,
     )
     db.add(ideation)
     await db.commit()
     await db.refresh(ideation)
+
+    await enforcer.add_policies(
+        [
+            (current_user.id, ideation.id, "write"),
+        ]
+    )
     return IdeationResponse.model_validate(ideation)
 
 
 @router.put("/ideations/{ideation_id}", response_model=IdeationResponse)
 async def update_ideation(
-    ideation_id: str,
-    request: IdeationRequest,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+        ideation_id: str,
+        request: IdeationRequest,
+        db: AsyncSession = Depends(get_db),
+        current_user: User = Depends(get_current_user),
 ):
+    if not enforcer.enforce(current_user.id, ideation_id, "write"):
+        raise HTTPException(status_code=403, detail="Permission denied")
+
     result = await db.execute(
-        select(Ideation).where(
-            Ideation.id == ideation_id,
-            Ideation.user_id == current_user.id,
-        )
+        select(Ideation).where(Ideation.id == ideation_id)
     )
     ideation = result.scalars().first()
 
-    if ideation.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Permission denied")
     if not ideation:
         raise HTTPException(status_code=404, detail="Ideation not found")
 
@@ -136,20 +157,20 @@ async def update_ideation(
     "/ideations/{ideation_id}", status_code=status.HTTP_204_NO_CONTENT
 )
 async def delete_ideation(
-    ideation_id: str,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+        ideation_id: str,
+        db: AsyncSession = Depends(get_db),
+        current_user: User = Depends(get_current_user),
 ):
+    if not enforcer.enforce(current_user.id, ideation_id, "write"):
+        raise HTTPException(status_code=403, detail="Permission denied")
+
     result = await db.execute(
-        select(Ideation).where(
-            Ideation.id == ideation_id,
-            Ideation.user_id == current_user.id,
-        )
+        delete(Ideation).where(Ideation.id == ideation_id)
     )
     ideation = result.scalars().first()
 
     if not ideation:
         raise HTTPException(status_code=404, detail="Ideation not found")
 
-    ideation.in_use = False
+    # FIXME commit 없이 되는지 확인
     return Response(status_code=status.HTTP_204_NO_CONTENT)

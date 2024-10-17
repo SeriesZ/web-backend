@@ -4,6 +4,7 @@ from functools import wraps
 from cachetools.func import ttl_cache
 
 
+# FIXME 제대로 동작 안합니다.
 def ttl_cache_with_signature(*cache_args, **cache_kwargs):
     def decorator(func):
         cached_func = ttl_cache(*cache_args, **cache_kwargs)(func)

@@ -9,20 +9,17 @@ class Attachment(Base):
 
     file_name = Column(String, nullable=False)  # 파일 이름
     file_path = Column(String, nullable=False)  # 파일 경로 (s3 저장 경로)
-    file_type = Column(
-        String, nullable=False
-    )  # 파일 유형 (예: image/jpeg, application/pdf)
-    related_id = Column(Integer, nullable=False)  # 연결된 id
+    related_id = Column(String, nullable=False)  # 연결된 id
 
 
 class Comment(Base):
     __tablename__ = "comments"
 
+    related_id = Column(String, nullable=False)  # 연결된 id
     content = Column(String, nullable=False)  # 내용
-    rating = Column(Integer, nullable=False)  # 별점 (1~5)
-    related_id = Column(Integer, nullable=False)  # 연결된 id
-    user_id = Column(Integer, nullable=False)  # 작성자 id
+    rating = Column(Integer, nullable=True)  # 별점 (1~5)
 
+    user_id = Column(String, nullable=False)  # 작성자 id
     user = relationship(
         "User",
         primaryjoin="User.id == Comment.user_id",
