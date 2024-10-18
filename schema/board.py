@@ -1,15 +1,17 @@
 from pydantic import BaseModel
 
+from model.board import BoardCategory
+
 
 class BoardRequest(BaseModel):
-    category: str
+    category: BoardCategory
     title: str
     content: str
 
 
 class BoardResponse(BaseModel):
     id: str
-    category: str
+    category: BoardCategory
     title: str
     content: str
 

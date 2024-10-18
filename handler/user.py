@@ -72,7 +72,6 @@ async def create_user(
     db_user.password = request.password
     db.add(db_user)
     try:
-        await db.commit()
         await db.refresh(db_user)
     except Exception:
         traceback.print_exc()
