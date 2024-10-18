@@ -5,14 +5,15 @@ from datetime import datetime
 import casbin
 import casbin_async_sqlalchemy_adapter
 import pytz
+from dotenv import load_dotenv
 from sqlalchemy import Column, DateTime, String, event
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.ext.declarative import as_declarative, declared_attr
 from sqlalchemy.orm import configure_mappers, sessionmaker
 
+load_dotenv()
 ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
-
-SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
+SQLALCHEMY_DATABASE_URL = os.getenv("SQLALCHEMY_DATABASE_URL")
 KST = pytz.timezone("Asia/Seoul")
 
 async_engine = create_async_engine(SQLALCHEMY_DATABASE_URL, echo=True)
