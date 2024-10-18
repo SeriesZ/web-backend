@@ -13,7 +13,6 @@ from database import get_db
 from model.user import User
 from schema.token import UserToken
 
-
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = float(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
@@ -29,7 +28,7 @@ async def get_user(db: AsyncSession, email: str):
 
 
 async def authenticate_user(
-        email: str, password: str, db: AsyncSession = Depends(get_db)
+    email: str, password: str, db: AsyncSession = Depends(get_db)
 ):
     user = await get_user(db, email)
     if not user:
@@ -40,7 +39,7 @@ async def authenticate_user(
 
 
 def create_access_token(
-        data: UserToken, expires_delta: Union[timedelta, None] = None
+    data: UserToken, expires_delta: Union[timedelta, None] = None
 ):
     to_encode = data.dict()
     if expires_delta:
@@ -53,7 +52,7 @@ def create_access_token(
 
 
 async def get_current_user(
-        token: Annotated[str, Depends(oauth2_scheme)],
+    token: Annotated[str, Depends(oauth2_scheme)],
 ):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])

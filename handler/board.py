@@ -15,10 +15,10 @@ router = APIRouter(tags=["공지사항/게시판"])
 
 @router.get("/boards", response_model=List[BoardResponse])
 async def read_boards(
-        category: BoardCategory = None,
-        offset: int = 0,
-        limit: int = 10,
-        repo: CrudRepository = Depends(get_repository),
+    category: BoardCategory = None,
+    offset: int = 0,
+    limit: int = 10,
+    repo: CrudRepository = Depends(get_repository),
 ):
     clause = None
     if category:
@@ -29,8 +29,8 @@ async def read_boards(
 
 @router.get("/board/{id}", response_model=BoardResponse)
 async def read_board(
-        id: str,
-        repo: CrudRepository = Depends(get_repository),
+    id: str,
+    repo: CrudRepository = Depends(get_repository),
 ):
     board = await repo.find_by_id(Board, id)
     return BoardResponse.model_validate(board)
@@ -38,9 +38,9 @@ async def read_board(
 
 @router.post("/board", response_model=BoardResponse)
 async def create_board(
-        board: BoardRequest,
-        repo: CrudRepository = Depends(get_repository),
-        current_user: User = Depends(get_current_user),
+    board: BoardRequest,
+    repo: CrudRepository = Depends(get_repository),
+    current_user: User = Depends(get_current_user),
 ):
     if not current_user.role != RoleEnum.ADMIN:
         raise HTTPException(status_code=403, detail="Permission denied")
@@ -56,10 +56,10 @@ async def create_board(
 
 @router.put("/board/{id}", status_code=200)
 async def update_board(
-        id: str,
-        request: BoardRequest,
-        repo: CrudRepository = Depends(get_repository),
-        current_user: User = Depends(get_current_user),
+    id: str,
+    request: BoardRequest,
+    repo: CrudRepository = Depends(get_repository),
+    current_user: User = Depends(get_current_user),
 ):
     if not current_user.role != RoleEnum.ADMIN:
         raise HTTPException(status_code=403, detail="Permission denied")
@@ -71,9 +71,9 @@ async def update_board(
 
 @router.delete("/board/{id}", status_code=204)
 async def delete_board(
-        id: str,
-        repo: CrudRepository = Depends(get_repository),
-        current_user: User = Depends(get_current_user),
+    id: str,
+    repo: CrudRepository = Depends(get_repository),
+    current_user: User = Depends(get_current_user),
 ):
     if not current_user.role != RoleEnum.ADMIN:
         raise HTTPException(status_code=403, detail="Permission denied")

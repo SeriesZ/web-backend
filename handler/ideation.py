@@ -33,10 +33,10 @@ async def get_themes(
     "/ideation/themes", response_model=Dict[str, List[IdeationResponse]]
 )
 async def fetch_ideation_list_by_themes(
-        theme_name: Optional[str] = None,
-        offset: int = 0,
-        limit: int = 10,
-        db: AsyncSession = Depends(get_db),
+    theme_name: Optional[str] = None,
+    offset: int = 0,
+    limit: int = 10,
+    db: AsyncSession = Depends(get_db),
 ):
     # 모든 고유한 테마를 조회
     themes_result = await fetch_themes(db, theme_name)
@@ -92,9 +92,9 @@ async def fetch_ideation_list_by_themes(
 
 @router.get("/ideation/{ideation_id}", response_model=IdeationResponse)
 async def get_ideation(
-        ideation_id: str,
-        db: AsyncSession = Depends(get_db),
-        current_user: User = Depends(get_current_user),
+    ideation_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     ideation = await db.execute(
         select(Ideation).where(Ideation.id == ideation_id)
@@ -117,9 +117,9 @@ async def get_ideation(
 # TODO form에서 file upload 따로
 @router.post("/ideation", status_code=status.HTTP_201_CREATED)
 async def create_ideation(
-        request: IdeationRequest,
-        db: AsyncSession = Depends(get_db),
-        current_user: User = Depends(get_current_user),
+    request: IdeationRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     ideation = Ideation(**request.dict())
     ideation.user_id = current_user.id
@@ -130,10 +130,10 @@ async def create_ideation(
 
 @router.put("/ideation/{ideation_id}", status_code=status.HTTP_200_OK)
 async def update_ideation(
-        ideation_id: str,
-        request: IdeationRequest,
-        db: AsyncSession = Depends(get_db),
-        current_user: User = Depends(get_current_user),
+    ideation_id: str,
+    request: IdeationRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     if not enforcer.enforce(current_user.id, ideation_id, "write"):
         raise HTTPException(status_code=403, detail="Permission denied")
@@ -154,9 +154,9 @@ async def update_ideation(
     "/ideations/{ideation_id}", status_code=status.HTTP_204_NO_CONTENT
 )
 async def delete_ideation(
-        ideation_id: str,
-        db: AsyncSession = Depends(get_db),
-        current_user: User = Depends(get_current_user),
+    ideation_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     if not enforcer.enforce(current_user.id, ideation_id, "write"):
         raise HTTPException(status_code=403, detail="Permission denied")
