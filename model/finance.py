@@ -3,15 +3,14 @@ from sqlalchemy import JSON, Column, Float, String
 from database import Base
 
 
-class Financial(Base):
-    __tablename__ = "financials"
+class Finance(Base):
+    __tablename__ = "finances"
 
     ideation_id = Column(String, nullable=False)  # 아이디어 ID
 
     # 원가 항목
     direct_material = Column(Float)  # 직접재료비
     direct_expense = Column(Float)  # 직접경비
-    item_input = Column(Float)  # 항목입력
     direct_labor = Column(Float)  # 직접노무비
     manufacturing_cost = Column(Float)  # 제조간접비
     profit_rate = Column(Float)  # 이익률

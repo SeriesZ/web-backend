@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from database import AsyncSessionLocal
 from model.attachment import Attachment, Comment
 from model.board import Board, BoardCategory
-from model.financial import Financial
+from model.finance import Finance
 from model.ideation import Ideation, Status, Theme
 from model.invest import Investment, Investor
 from model.user import Group, RoleEnum, User
@@ -21,7 +21,7 @@ async def create_mock():
                 mock_data += get_mock_attachment()
                 mock_data += get_mock_comment()
                 mock_data += get_mock_board()
-                mock_data += get_mock_financial()
+                mock_data += get_mock_finance()
                 session.add_all(mock_data)
                 await session.commit()
             except Exception as e:
@@ -532,13 +532,12 @@ def get_mock_board():
     ]
 
 
-def get_mock_financial():
+def get_mock_finance():
     return [
-        Financial(
+        Finance(
             ideation_id="Ideation_1",
             direct_material=10000.0,  # 직접재료비
             direct_expense=5000.0,  # 직접경비
-            item_input=2000.0,  # 항목입력
             direct_labor=4000.0,  # 직접노무비
             manufacturing_cost=3000.0,  # 제조간접비
             profit_rate=15.0,  # 이익률
@@ -581,11 +580,10 @@ def get_mock_financial():
                 28,
             ],  # 직원 수 (연차별 리스트)
         ),
-        Financial(
+        Finance(
             ideation_id="Ideation_2",
             direct_material=15000.0,  # 직접재료비
             direct_expense=7000.0,  # 직접경비
-            item_input=2500.0,  # 항목입력
             direct_labor=4500.0,  # 직접노무비
             manufacturing_cost=4000.0,  # 제조간접비
             profit_rate=12.0,  # 이익률

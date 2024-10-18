@@ -3,13 +3,12 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 
-class FinancialScheme(BaseModel):
+class FinanceScheme(BaseModel):
     ideation_id: str  # 아이디어 ID
 
     # 원가 항목
     direct_material: Optional[float]  # 직접재료비
     direct_expense: Optional[float]  # 직접경비
-    item_input: Optional[float]  # 항목입력
     direct_labor: Optional[float]  # 직접노무비
     manufacturing_cost: Optional[float]  # 제조간접비
     profit_rate: Optional[float]  # 이익률
@@ -40,11 +39,11 @@ class FinancialScheme(BaseModel):
         from_attributes = True
 
 
-class FinancialRequest(FinancialScheme):
+class FinanceRequest(FinanceScheme):
     pass
 
 
-class FinancialResponse(FinancialScheme):
+class FinanceResponse(FinanceScheme):
     id: str
 
     class Config:
