@@ -13,10 +13,10 @@ class CrudRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def fetch_all(self, entity_class, offset=0, limit=10, clause=None):
+    async def fetch_all(self, entity_class, offset=0, limit=10, clauses=None):
         statement = select(entity_class)
-        if clause is not None:
-            statement = statement.where(clause)
+        if clauses is not None:
+            statement = statement.where(clauses)
 
         result = await self.db.execute(statement.offset(offset).limit(limit))
         return result.scalars().all()

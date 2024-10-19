@@ -1,10 +1,7 @@
-from typing import List, Optional
-
-from sqlalchemy import select, update
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import update
 
 from database import AsyncSessionLocal
-from model.ideation import Ideation, Theme
+from model.ideation import Ideation
 
 
 async def increment_view_count(ideation_id: str, user_id: str):
@@ -25,16 +22,3 @@ async def increment_view_count(ideation_id: str, user_id: str):
                 .where(Ideation.id == ideation_id, Ideation.user_id != user_id)
                 .values(view_count=Ideation.view_count + 1)
             )
-
-
-async def fetch_themes(
-    db: AsyncSession, name: Optional[str] = None
-) -> List[Theme]:
-    if name is None:
-        result = await db.execute(select(Theme))
-        themes = result.scalars().all()
-    else:
-        # name이 있을 경우 해당 테마만 필터링
-        result = await db.execute(select(Theme).where(Theme.name == name))
-        themes = result.scalars().all()
-    return themes

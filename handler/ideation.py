@@ -2,7 +2,7 @@ from collections import defaultdict
 from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import delete, func, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from starlette import status
@@ -10,11 +10,11 @@ from starlette import status
 from auth import get_current_user
 from database import enforcer, get_db
 from handler.attachment import get_attachments, get_comments
-from model.ideation import Ideation
+from model.ideation import Ideation, Theme
 from model.user import User
 from schema.ideation import IdeationRequest, IdeationResponse, ThemeResponse
 from schema.invest import InvestmentResponse
-from service.ideation import fetch_themes
+from service.repository import CrudRepository, get_repository
 
 router = APIRouter(tags=["아이디어"])
 
@@ -22,9 +22,12 @@ router = APIRouter(tags=["아이디어"])
 @router.get("/themes", response_model=List[ThemeResponse])
 async def get_themes(
     theme_name: Optional[str] = None,
-    db: AsyncSession = Depends(get_db),
+    repo: CrudRepository = Depends(get_repository),
 ):
-    themes = await fetch_themes(db, theme_name)
+    clauses = None
+    if theme_name:
+        clauses = and_(Theme.name == theme_name)
+    themes = await repo.fetch_all(Theme, limit=100, clauses=clauses)
     return [ThemeResponse.model_validate(theme) for theme in themes]
 
 
@@ -37,9 +40,10 @@ async def fetch_ideation_list_by_themes(
     offset: int = 0,
     limit: int = 10,
     db: AsyncSession = Depends(get_db),
+    repo: CrudRepository = Depends(get_repository),
 ):
     # 모든 고유한 테마를 조회
-    themes_result = await fetch_themes(db, theme_name)
+    themes_result = await get_themes(theme_name, repo)
 
     # 1. 서브쿼리: 각 테마별 상위 N개의 id 가져오기
     subquery = (
@@ -93,61 +97,49 @@ async def fetch_ideation_list_by_themes(
 @router.get("/ideation/{ideation_id}", response_model=IdeationResponse)
 async def get_ideation(
     ideation_id: str,
-    db: AsyncSession = Depends(get_db),
+    repo: CrudRepository = Depends(get_repository),
     current_user: User = Depends(get_current_user),
 ):
-    ideation = await db.execute(
-        select(Ideation).where(Ideation.id == ideation_id)
-    )
-    ideation = ideation.scalars().first()
-    if not ideation:
-        raise HTTPException(status_code=404, detail="Ideation not found")
+    ideation = await repo.find_by_id(Ideation, ideation_id)
 
     if current_user.id != ideation.user_id:
         ideation.view_count += 1
 
     result = dict(
         **ideation.__dict__,
-        attachments=await get_attachments(ideation_id, db),
-        comments=await get_comments(ideation_id, db),
+        attachments=await get_attachments(ideation_id, repo),
+        comments=await get_comments(ideation_id, repo),
     )
     return IdeationResponse.model_validate(result)
 
 
 # TODO form에서 file upload 따로
-@router.post("/ideation", status_code=status.HTTP_201_CREATED)
+@router.post("/ideation", response_model=IdeationResponse)
 async def create_ideation(
     request: IdeationRequest,
-    db: AsyncSession = Depends(get_db),
+    repo: CrudRepository = Depends(get_repository),
     current_user: User = Depends(get_current_user),
 ):
     ideation = Ideation(**request.dict())
     ideation.user_id = current_user.id
-    db.add(ideation)
-    await db.refresh(ideation)
+    ideation = await repo.create(ideation)
     await enforcer.add_policies([(current_user.id, ideation.id, "write")])
+    return IdeationResponse.model_validate(ideation)
 
 
-@router.put("/ideation/{ideation_id}", status_code=status.HTTP_200_OK)
+@router.put("/ideation/{ideation_id}", response_model=IdeationResponse)
 async def update_ideation(
     ideation_id: str,
     request: IdeationRequest,
-    db: AsyncSession = Depends(get_db),
+    repo: CrudRepository = Depends(get_repository),
     current_user: User = Depends(get_current_user),
 ):
     if not enforcer.enforce(current_user.id, ideation_id, "write"):
         raise HTTPException(status_code=403, detail="Permission denied")
 
-    result = await db.execute(
-        select(Ideation).where(Ideation.id == ideation_id)
-    )
-    ideation = result.scalars().first()
-
-    if not ideation:
-        raise HTTPException(status_code=404, detail="Ideation not found")
-
-    for key, value in request.dict(exclude_unset=True).items():
-        setattr(ideation, key, value)
+    ideation = Ideation(**request.dict(), id=ideation_id)
+    ideation = await repo.update(ideation)
+    return IdeationResponse.model_validate(ideation)
 
 
 @router.delete(
@@ -155,14 +147,10 @@ async def update_ideation(
 )
 async def delete_ideation(
     ideation_id: str,
-    db: AsyncSession = Depends(get_db),
+    repo: CrudRepository = Depends(get_repository),
     current_user: User = Depends(get_current_user),
 ):
     if not enforcer.enforce(current_user.id, ideation_id, "write"):
         raise HTTPException(status_code=403, detail="Permission denied")
 
-    result = await db.execute(
-        delete(Ideation).where(Ideation.id == ideation_id)
-    )
-    if not result.scalars().first():
-        raise HTTPException(status_code=404, detail="Ideation not found")
+    await repo.delete(Ideation(id=ideation_id))
