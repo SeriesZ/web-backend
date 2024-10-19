@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Application</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+            margin: 0;
+        }
+        .container {
+            width: 80%;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .login-box, .chat-box {
+            margin-bottom: 20px;
+        }
+        .login-box input, .chat-box input {
+            padding: 10px;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .login-box button, .chat-box button {
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .login-box button:hover, .chat-box button:hover {
+            background-color: #0056b3;
+        }
+        .room-list {
+            margin-top: 20px;
+        }
+        .room-list ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .room-list li {
+            padding: 10px;
+            margin: 5px 0;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .room-list li:hover {
+            background-color: #d0d0d0;
+        }
+        #messages {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 300px;
+            overflow-y: scroll;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="login-box">
+        <h2>Login</h2>
+        <input type="text" id="userId" placeholder="User ID" />
+        <input type="password" id="password" placeholder="Password" />
+        <button onclick="login()">Login</button>
+    </div>
+    <div class="login-box">
+        <button onclick="requestLogin('admin@series0.com', '12341234')">Login(admin)</button>
+        <button onclick="requestLogin('test1@series0.com', '12341234')">Login(test1)</button>
+    </div>
+
+    <div class="room-list">
+        <h3>Your Rooms</h3>
+        <ul id="roomList"></ul>
+    </div>
+
+    <div id="messages">
+        <h3>Chat History</h3>
+        <div id="chatHistory"></div>
+    </div>
+
+    <!-- 채팅 입력 필드 추가 -->
+    <div class="chat-box">
+        <input type="text" id="chatMessage" placeholder="Enter message" disabled />
+        <button onclick="sendMessage()" disabled>Send</button>
+    </div>
+</div>
+
+<script>
+    let authToken = '';  // 로그인 후 발급받은 토큰 저장
+    let selectedRoomId = '';  // 현재 선택된 방의 room_id
+    let ws;  // WebSocket 연결
+    let userId = '';  // 사용자 ID
+
+    // 로그인 요청
+    function login() {
+        userId = document.getElementById('userId').value;
+        const password = document.getElementById('password').value;
+        requestLogin(userId, password);
+    }
+
+    function requestLogin(userId, pass) {
+        fetch('http://localhost:8080/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `username=${userId}&password=${pass}`
+        })
+            .then(response => response.json())
+            .then(data => {
+                authToken = data.access_token;  // 토큰 저장
+                console.log('Login successful!');
+                loadRooms();  // 방 목록 로드
+            })
+            .catch(error => {
+                console.error('Error during login:', error);
+            });
+    }
+
+    // 방 목록 불러오기
+    function loadRooms() {
+        fetch('http://localhost:8080/chat', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                const roomList = document.getElementById('roomList');
+                roomList.innerHTML = '';  // 기존 목록 비우기
+                data.forEach(chat => {
+                    const li = document.createElement('li');
+                    li.textContent = `Room ID: ${chat.id}`;
+                    li.onclick = () => enterRoom(chat.id);  // 클릭하면 해당 room_id로 WebSocket 연결
+                    roomList.appendChild(li);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading rooms:', error);
+            });
+    }
+
+    // 특정 room_id의 채팅 기록 불러오기 및 WebSocket 연결
+    function enterRoom(roomId) {
+        selectedRoomId = roomId;
+
+        fetch(`http://localhost:8080/chat/history?room_id=${roomId}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                const chatHistory = document.getElementById('chatHistory');
+                chatHistory.innerHTML = '';  // 기존 기록 비우기
+                data.history.forEach(message => {
+                    renderMessage(message);  // 기록 렌더링
+                });
+                connectWebSocket(roomId);  // WebSocket 연결
+            })
+            .catch(error => {
+                console.error('Error loading chat history:', error);
+            });
+    }
+
+    // WebSocket 연결
+    function connectWebSocket(roomId) {
+        ws = new WebSocket(`ws://localhost:8080/chat/ws?room_id=${roomId}&jwt_token=${authToken}`);
+
+        ws.onopen = function() {
+            console.log(`Connected to room ${roomId} via WebSocket.`);
+            document.getElementById("chatMessage").disabled = false;
+            document.querySelector(".chat-box button").disabled = false;
+        };
+
+        ws.onmessage = function(event) {
+            renderMessage(event.data);
+        };
+
+        ws.onclose = function() {
+            console.log("WebSocket connection closed.");
+            document.getElementById("chatMessage").disabled = true;
+            document.querySelector(".chat-box button").disabled = true;
+        };
+    }
+
+    function renderMessage(messageData) {
+        const chatHistory = document.getElementById('chatHistory');
+        const messageDiv = document.createElement('div');
+
+        // messageData가 문자열일 경우 JSON 파싱
+        let parsedMessage;
+        try {
+            parsedMessage = JSON.parse(messageData);
+        } catch (error) {
+            console.error('Error parsing message', error);
+            return;
+        }
+
+        const user = parsedMessage.user || 'Unknown User';  // 유저가 없으면 기본값 설정
+        const message = parsedMessage.message || 'No message';
+
+        messageDiv.innerHTML = `<b>${user}</b>: ${message}`;
+        chatHistory.appendChild(messageDiv);
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
+
+    // 메시지 전송
+    function sendMessage() {
+        const message = document.getElementById('chatMessage').value;
+        if (message.trim() !== "" && ws) {
+            const formattedMessage = `${message}`;
+            ws.send(formattedMessage);  // WebSocket으로 메시지 전송
+            document.getElementById('chatMessage').value = '';  // 입력창 초기화
+        }
+    }
+</script>
+
+</body>
+</html>
