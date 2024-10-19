@@ -1,54 +1,53 @@
 from typing import List
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import delete, select, update
-from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 from starlette.exceptions import HTTPException
 
 from auth import get_current_user
-from database import enforcer, get_db
+from database import enforcer
 from model.invest import Investment, Investor
 from model.user import User
-from schema.invest import InvestmentRequest, InvestorRequest, InvestorResponse
+from schema.invest import (InvestmentRequest, InvestmentResponse,
+                           InvestorRequest, InvestorResponse)
+from service.repository import CrudRepository, get_repository
 
 router = APIRouter(tags=["투자"])
 
 
-@router.post("/investment", status_code=status.HTTP_201_CREATED)
+@router.post("/investment", response_model=InvestmentResponse)
 async def create_investment(
     request: InvestmentRequest,
-    db: AsyncSession = Depends(get_db),
+    repo: CrudRepository = Depends(get_repository),
     current_user: User = Depends(get_current_user),
 ):
+    # FIXME investor를 group으로 바꾸던가 해야함
+    if not current_user.group_id == request.investor_id:
+        raise HTTPException(status_code=403, detail="Permission denied")
     investment = Investment(**request.dict())
-    db.add(investment)
-    await db.refresh(investment)
+    investment = await repo.create(investment)
     await enforcer.add_policies(
         [
             (current_user.id, investment.id, "write"),
             (current_user.group_id, investment.id, "write"),
         ]
     )
+    return InvestmentResponse.model_validate(investment)
 
 
-@router.put("/investment/{investment_id}", status_code=status.HTTP_200_OK)
+@router.put("/investment/{investment_id}", response_model=InvestmentResponse)
 async def update_investment(
     investment_id: str,
     request: InvestmentRequest,
-    db: AsyncSession = Depends(get_db),
+    repo: CrudRepository = Depends(get_repository),
     current_user: User = Depends(get_current_user),
 ):
     if not enforcer.enforce(current_user.id, investment_id, "write"):
         raise HTTPException(status_code=403, detail="Permission denied")
 
-    result = await db.execute(
-        update(Investment)
-        .where(Investment.id == investment_id)
-        .values(**request.dict(exclude_unset=True))
-    )
-    if result.rowcount == 0:
-        raise HTTPException(status_code=404, detail="Investment not found")
+    investment = Investment(**request.dict())
+    investment = await repo.update(investment)
+    return InvestmentResponse.model_validate(investment)
 
 
 @router.delete(
@@ -56,80 +55,62 @@ async def update_investment(
 )
 async def delete_investment(
     investment_id: str,
-    db: AsyncSession = Depends(get_db),
+    repo: CrudRepository = Depends(get_repository),
     current_user: User = Depends(get_current_user),
 ):
     if not enforcer.enforce(current_user.id, investment_id, "write"):
         raise HTTPException(status_code=403, detail="Permission denied")
-
-    result = await db.execute(
-        delete(Investment).where(Investment.id == investment_id)
-    )
-
-    if result.rowcount == 0:
-        raise HTTPException(status_code=404, detail="Investment not found")
+    await repo.delete(Investment(id=investment_id))
 
 
 @router.get("/investors", response_model=List[InvestorResponse])
 async def get_investors(
     offset: int = 0,
     limit: int = 10,
-    db: AsyncSession = Depends(get_db),
+    repo: CrudRepository = Depends(get_repository),
 ):
-    investors = await db.execute(select(Investor).offset(offset).limit(limit))
-    investors = investors.scalars().all()
+    investors = await repo.fetch_all(Investor, offset, limit)
     return [InvestorResponse.model_validate(i) for i in investors]
 
 
 @router.get("/investor/{investor_id}", response_model=InvestorResponse)
 async def get_investor(
     investor_id: str,
-    db: AsyncSession = Depends(get_db),
+    repo: CrudRepository = Depends(get_repository),
 ):
-    investor = await db.execute(
-        select(Investor).where(Investor.id == investor_id)
-    )
-    investor = investor.scalar()
-    if investor is None:
-        raise HTTPException(status_code=404, detail="Investor not found")
+    investor = await repo.find_by_id(Investor, investor_id)
     return InvestorResponse.model_validate(investor)
 
 
-@router.post("/investor", status_code=status.HTTP_201_CREATED)
+@router.post("/investor", response_model=InvestorResponse)
 async def create_investor(
     request: InvestorRequest,
-    db: AsyncSession = Depends(get_db),
+    repo: CrudRepository = Depends(get_repository),
     current_user: User = Depends(get_current_user),
 ):
-    async with db.begin():
-        # 투자자 생성 및 추가
-        investor = Investor(**request.dict())
-        db.add(investor)
-        await db.refresh(investor)
+    investor = Investor(**request.dict())
+    investor = await repo.create(investor)
     await enforcer.add_policies(
         [
             (investor.id, investor.id, "write"),  # group 사용자 권한
         ]
     )
+    return InvestorResponse.model_validate(investor)
 
 
-@router.put("/investor/{investor_id}", status_code=status.HTTP_200_OK)
+@router.put("/investor/{investor_id}", response_model=InvestorResponse)
 async def update_investor(
     investor_id: str,
     request: InvestorRequest,
-    db: AsyncSession = Depends(get_db),
+    repo: CrudRepository = Depends(get_repository),
     current_user: User = Depends(get_current_user),
 ):
     if not enforcer.enforce(current_user.group_id, investor_id, "write"):
         raise HTTPException(status_code=403, detail="Permission denied")
 
-    result = await db.execute(
-        update(Investor)
-        .where(Investor.id == investor_id)
-        .values(**request.dict(exclude_unset=True))
-    )
-    if result.rowcount == 0:
-        raise HTTPException(status_code=404, detail="Investor not found")
+    investor = Investor(**request.dict())
+    investor = await repo.update(investor)
+    return InvestorResponse.model_validate(investor)
 
 
 @router.delete(
@@ -137,14 +118,9 @@ async def update_investor(
 )
 async def delete_investor(
     investor_id: str,
-    db: AsyncSession = Depends(get_db),
+    repo: CrudRepository = Depends(get_repository),
     current_user: User = Depends(get_current_user),
 ):
     if not enforcer.enforce(current_user.group_id, investor_id, "write"):
         raise HTTPException(status_code=403, detail="Permission denied")
-
-    result = await db.execute(
-        delete(Investor).where(Investor.id == investor_id)
-    )
-    if result.rowcount == 0:
-        raise HTTPException(status_code=404, detail="Investor not found")
+    await repo.delete(Investor(id=investor_id))
