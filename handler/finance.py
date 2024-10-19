@@ -1,14 +1,13 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy import delete, select
-from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 from starlette.exceptions import HTTPException
 
 from auth import get_current_user
-from database import enforcer, get_db
+from database import enforcer
 from model.finance import Finance
 from model.user import User
 from schema.finance import FinanceRequest, FinanceResponse
+from service.repository import CrudRepository, get_repository
 
 router = APIRouter(tags=["금융"])
 
@@ -16,7 +15,7 @@ router = APIRouter(tags=["금융"])
 @router.get("/finance/{ideation_id}", response_model=FinanceResponse)
 async def get_finance(
     ideation_id: str,
-    db: AsyncSession = Depends(get_db),
+    repo: CrudRepository = Depends(get_repository),
     current_user: User = Depends(get_current_user),
 ):
     if not enforcer.enforce(current_user.id, ideation_id, "write"):
@@ -25,22 +24,16 @@ async def get_finance(
             detail="permission denied",
         )
 
-    finance = await db.execute(
-        select(Finance).where(Finance.ideation_id == ideation_id)
+    finance = await repo.find_by_id(
+        Finance, ideation_id, field_name="ideation_id"
     )
-    finance = finance.scalars().first()
-    if not finance:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="finance not found",
-        )
     return FinanceResponse.model_validate(finance)
 
 
-@router.post("/finance", status_code=status.HTTP_201_CREATED)
+@router.post("/finance", response_model=FinanceResponse)
 async def create_finance(
     request: FinanceRequest,
-    db: AsyncSession = Depends(get_db),
+    repo: CrudRepository = Depends(get_repository),
     current_user: User = Depends(get_current_user),
 ):
     if not enforcer.enforce(current_user.id, request.ideation_id, "write"):
@@ -53,13 +46,14 @@ async def create_finance(
         **request.dict(),
         user_id=current_user.id,
     )
-    db.add(finance)
+    finance = await repo.create(finance)
+    return FinanceResponse.model_validate(finance)
 
 
-@router.put("/finance", status_code=status.HTTP_200_OK)
+@router.put("/finance", response_model=FinanceResponse)
 async def update_finance(
     request: FinanceRequest,
-    db: AsyncSession = Depends(get_db),
+    repo: CrudRepository = Depends(get_repository),
     current_user: User = Depends(get_current_user),
 ):
     if not enforcer.enforce(current_user.id, request.ideation_id, "write"):
@@ -68,17 +62,9 @@ async def update_finance(
             detail="permission denied",
         )
 
-    result = await db.execute(
-        select(Finance).where(Finance.ideation_id == request.ideation_id)
-    )
-    finance = result.scalars().first()
-    if not finance:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="finance not found",
-        )
-    for key, value in request.dict().items():
-        setattr(finance, key, value)
+    finance = Finance(**request.dict())
+    finance = await repo.update(finance, field_name="ideation_id")
+    return FinanceResponse.model_validate(finance)
 
 
 @router.delete(
@@ -86,7 +72,7 @@ async def update_finance(
 )
 async def delete_finance(
     ideation_id: str,
-    db: AsyncSession = Depends(get_db),
+    repo: CrudRepository = Depends(get_repository),
     current_user: User = Depends(get_current_user),
 ):
     if not enforcer.enforce(current_user.id, ideation_id, "write"):
@@ -94,14 +80,4 @@ async def delete_finance(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="permission denied",
         )
-
-    result = await db.execute(
-        delete(Finance).where(Finance.ideation_id == ideation_id)
-    )
-
-    result = result.scalars().first()
-    if not result:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="finance not found",
-        )
+    await repo.delete(Finance(ideation_id=ideation_id))

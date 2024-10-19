@@ -10,24 +10,26 @@ from model.attachment import Attachment, Comment
 from model.user import User
 from schema.attachment import (AttachmentResponse, CommentRequest,
                                CommentResponse)
-from service.repository import get_repository, CrudRepository
+from service.repository import CrudRepository, get_repository
 
 router = APIRouter(tags=["코멘트"])
 
 
 @router.get("/attachment/{id}", response_model=List[AttachmentResponse])
 async def get_attachments(
-        id: str,
-        repo: CrudRepository = Depends(get_repository),
+    id: str,
+    repo: CrudRepository = Depends(get_repository),
 ):
-    attachments = await repo.find_by_id(Attachment, id, field_name="related_id")
+    attachments = await repo.find_by_id(
+        Attachment, id, field_name="related_id"
+    )
     return [AttachmentResponse.model_validate(a) for a in attachments]
 
 
 @router.get("/comment/{id}", response_model=List[CommentResponse])
 async def get_comments(
-        id: str,
-        repo: CrudRepository = Depends(get_repository),
+    id: str,
+    repo: CrudRepository = Depends(get_repository),
 ):
     comments = await repo.find_by_id(Comment, id, field_name="related_id")
     return [CommentResponse.model_validate(c) for c in comments]
@@ -35,9 +37,9 @@ async def get_comments(
 
 @router.post("/comment", response_model=CommentResponse)
 async def create_comment(
-        comment: CommentRequest,
-        repo: CrudRepository = Depends(get_repository),
-        current_user: User = Depends(get_current_user),
+    comment: CommentRequest,
+    repo: CrudRepository = Depends(get_repository),
+    current_user: User = Depends(get_current_user),
 ):
     comment = Comment(
         **comment.dict(),
@@ -54,10 +56,10 @@ async def create_comment(
 
 @router.put("/comment/{id}", response_model=CommentResponse)
 async def update_comment(
-        id: str,
-        request: CommentRequest,
-        repo: CrudRepository = Depends(get_repository),
-        current_user: User = Depends(get_current_user),
+    id: str,
+    request: CommentRequest,
+    repo: CrudRepository = Depends(get_repository),
+    current_user: User = Depends(get_current_user),
 ):
     if not enforcer.enforce(current_user.id, id, "write"):
         raise HTTPException(status_code=403, detail="Permission denied")
@@ -72,9 +74,9 @@ async def update_comment(
 
 @router.delete("/comment/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_comment(
-        id: str,
-        repo: CrudRepository = Depends(get_repository),
-        current_user: User = Depends(get_current_user),
+    id: str,
+    repo: CrudRepository = Depends(get_repository),
+    current_user: User = Depends(get_current_user),
 ):
     if not enforcer.enforce(current_user.id, id, "write"):
         raise HTTPException(status_code=403, detail="Permission denied")
