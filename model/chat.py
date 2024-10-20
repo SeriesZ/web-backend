@@ -1,5 +1,5 @@
 from sqlalchemy import Column, String
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import backref, relationship
 
 from database import Base
 
@@ -20,5 +20,5 @@ class Chat(Base):
         primaryjoin="foreign(ChatUser.chat_id) == Chat.id",
         secondaryjoin="foreign(ChatUser.user_id) == User.id",
         lazy="subquery",
-        backref=backref("chat_user", lazy=True)
+        backref=backref("chat_user", lazy=True),
     )

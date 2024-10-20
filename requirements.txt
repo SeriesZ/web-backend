@@ -15,3 +15,9 @@ python-multipart
 hypercorn[trio,h3]
 aioredis
 aiokafka
+fastapi-cache2
+greenlet
+autoflake
+black==24.8.0
+isort
+click

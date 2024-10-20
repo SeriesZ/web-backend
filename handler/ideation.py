@@ -2,6 +2,7 @@ from collections import defaultdict
 from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi_cache.decorator import cache
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -20,6 +21,7 @@ router = APIRouter(tags=["아이디어"])
 
 
 @router.get("/themes", response_model=List[ThemeResponse])
+@cache(expire=60 * 10)
 async def get_themes(
     theme_name: Optional[str] = None,
     repo: CrudRepository = Depends(get_repository),
@@ -35,6 +37,7 @@ async def get_themes(
 @router.get(
     "/ideation/themes", response_model=Dict[str, List[IdeationResponse]]
 )
+@cache(expire=60 * 10)
 async def fetch_ideation_list_by_themes(
     theme_name: Optional[str] = None,
     offset: int = 0,

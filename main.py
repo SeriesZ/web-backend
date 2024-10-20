@@ -2,6 +2,8 @@ import os.path
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.inmemory import InMemoryBackend
 from starlette.middleware.cors import CORSMiddleware
 
 from database import init_db
@@ -17,6 +19,7 @@ from mock import create_mock
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("App is starting up...")
+    FastAPICache.init(InMemoryBackend())
     if os.path.exists("test.db"):
         await init_db()
     else:
@@ -37,7 +40,9 @@ app.include_router(chat_router)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 모든 출처 허용 (보안 문제를 피하려면 필요한 도메인만 허용)
+    allow_origins=[
+        "*"
+    ],  # 모든 출처 허용 (보안 문제를 피하려면 필요한 도메인만 허용)
     allow_credentials=True,
     allow_methods=["*"],  # 모든 HTTP 메서드 허용
     allow_headers=["*"],  # 모든 HTTP 헤더 허용
