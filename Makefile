@@ -9,7 +9,7 @@ ISORT = isort
 SRC_DIR = .
 
 # .py 파일을 대상으로 지정
-PY_FILES = $(shell find $(SRC_DIR) -name "*.py")
+PY_FILES = $(shell find $(SRC_DIR) -path $(SRC_DIR)/venv -prune -o -name "*.py" -print)
 
 # 기본 목표: format
 format: format-autoflake format-black format-isort
@@ -17,7 +17,7 @@ format: format-autoflake format-black format-isort
 # autoflake: 사용하지 않는 임포트 및 변수를 제거
 format-autoflake:
 	@echo "Removing unused imports and variables with autoflake..."
-	$(AUTOFLAKE) --in-place --remove-all-unused-imports --remove-unused-variables --recursive $(SRC_DIR)
+	$(AUTOFLAKE) --exclude=venv --in-place --remove-all-unused-imports --remove-unused-variables --recursive $(SRC_DIR)
 
 # black: 코드 포매팅
 format-black:
