@@ -22,19 +22,12 @@ from schema.user import UserResponse
 router = APIRouter(tags=["Chat"])
 
 
-async def get_chat_history(
-    redis: Redis, room_id: str, offset: int = 0, limit: int = 20
-):
-    history = await redis.lrange(room_id, offset, offset + limit - 1)
-    return history
-
-
 @router.websocket("/chat/ws")
 async def websocket_endpoint(
-    room_id: str,
-    jwt_token: str,
-    websocket: WebSocket,
-    redis: Redis = Depends(get_redis),
+        room_id: str,
+        jwt_token: str,
+        websocket: WebSocket,
+        redis: Redis = Depends(get_redis),
 ):
     current_user = await get_current_user(jwt_token)
     await websocket.accept()
@@ -82,10 +75,10 @@ async def websocket_endpoint(
 
 # @router.websocket("/chat/ws/kafka")
 async def websocket_endpoint(
-    room_id: str,
-    jwt_token: str,
-    websocket: WebSocket,
-    kafka_producer: AIOKafkaProducer = Depends(get_kafka_producer),
+        room_id: str,
+        jwt_token: str,
+        websocket: WebSocket,
+        kafka_producer: AIOKafkaProducer = Depends(get_kafka_producer),
 ):
     current_user = await get_current_user(jwt_token)
     await websocket.accept()
@@ -142,17 +135,17 @@ async def websocket_endpoint(
 
 @router.get("/chat/history")
 async def get_history(
-    room_id: str, offset: int = 0, limit: int = 20, redis=Depends(get_redis)
+        room_id: str, offset: int = 0, limit: int = 20, redis=Depends(get_redis)
 ):
-    history = await get_chat_history(redis, room_id, offset, limit)
+    history = await redis.lrange(room_id, offset, offset + limit - 1)
     return {"history": [message for message in history]}
 
 
 @router.post("/chat", response_model=ChatResponse)
 async def create_chat(
-    to_user_id: str,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+        to_user_id: str,
+        db: AsyncSession = Depends(get_db),
+        current_user: User = Depends(get_current_user),
 ):
     async with db.begin():
         chat = Chat()
@@ -175,8 +168,8 @@ async def create_chat(
 
 @router.get("/chat", response_model=List[ChatResponse])
 async def get_chat(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+        db: AsyncSession = Depends(get_db),
+        current_user: User = Depends(get_current_user),
 ):
     result = await db.execute(
         select(Chat).join(Chat.users).where(User.id == current_user.id)
@@ -194,9 +187,9 @@ async def get_chat(
 
 @router.delete("/chat/{chat_id}")
 async def delete_chat(
-    chat_id: str,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+        chat_id: str,
+        db: AsyncSession = Depends(get_db),
+        current_user: User = Depends(get_current_user),
 ):
     result = await db.execute(delete(Chat).where(Chat.id == chat_id))
     if result.rowcount == 0:
