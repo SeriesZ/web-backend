@@ -21,7 +21,6 @@ router = APIRouter(tags=["아이디어"])
 
 
 @router.get("/themes", response_model=List[ThemeResponse])
-@cache(expire=60 * 10)
 async def get_themes(
     theme_name: Optional[str] = None,
     repo: CrudRepository = Depends(get_repository),
