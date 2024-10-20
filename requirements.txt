@@ -14,7 +14,6 @@ passlib
 python-multipart
 hypercorn[trio,h3]
 aioredis
-aiokafka
 fastapi-cache2
 greenlet
 autoflake
