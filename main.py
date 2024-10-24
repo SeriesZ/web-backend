@@ -5,8 +5,9 @@ from fastapi import FastAPI
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
 from starlette.middleware.cors import CORSMiddleware
+from starlette.staticfiles import StaticFiles
 
-from database import init_db
+from common.config import ASSETS_DIR
 from handler.attachment import router as attachment_router
 from handler.board import router as board_router
 from handler.chat import router as chat_router
@@ -19,6 +20,7 @@ from mock import create_mock
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("App is starting up...")
+    from database import init_db
     FastAPICache.init(InMemoryBackend())
     if os.path.exists("test.db"):
         await init_db()
@@ -38,6 +40,8 @@ app.include_router(invest_router)
 app.include_router(attachment_router)
 app.include_router(chat_router)
 
+app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="assets")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -51,4 +55,4 @@ app.add_middleware(
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=False)
+    uvicorn.run("main:app", host="0.0.0.0", port=8082, reload=False)

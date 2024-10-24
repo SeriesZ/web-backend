@@ -2,7 +2,7 @@ import random
 from datetime import datetime, timedelta
 
 from database import AsyncSessionLocal
-from model.attachment import Attachment, Comment
+from model.attachment import Attachment, Comment, Image
 from model.board import Board, BoardCategory
 from model.finance import Finance
 from model.ideation import Ideation, Status, Theme
@@ -17,6 +17,7 @@ async def create_mock():
                 mock_data = get_mock_themes()
                 mock_data += get_mock_investors()
                 mock_data += get_mock_users()
+                mock_data += get_mock_image()
                 mock_data += get_mock_ideation()
                 mock_data += get_mock_attachment()
                 mock_data += get_mock_comment()
@@ -150,6 +151,53 @@ def get_mock_themes():
             name="광고 및 시장 조사업",
             description="",
             image="https://cdn-icons-png.flaticon.com/512/2810/2810868.png",
+        ),
+    ]
+
+
+def get_mock_image():
+    return [
+        Image(
+            id="image_1",
+            related_id="ideation_1",
+            file_name="farming.jpg",
+            file_path="https://www.publicdomainpictures.net/pictures/320000/nahled/farming.jpg",
+        ),
+        Image(
+            id="image_2",
+            related_id="ideation_2",
+            file_name="organic-farming.jpg",
+            file_path="https://www.publicdomainpictures.net/pictures/200000/nahled/organic-farming-1468283323ALH.jpg",
+        ),
+        Image(
+            id="image_3",
+            related_id="ideation_3",
+            file_name="farm-technology.jpg",
+            file_path="https://www.publicdomainpictures.net/pictures/290000/nahled/farm-technology.jpg",
+        ),
+        Image(
+            id="image_4",
+            related_id="ideation_4",
+            file_name="agricultural-fields.jpg",
+            file_path="https://www.publicdomainpictures.net/pictures/300000/nahled/agricultural-fields.jpg",
+        ),
+        Image(
+            id="image_5",
+            related_id="ideation_5",
+            file_name="farm-robotics.jpg",
+            file_path="https://www.publicdomainpictures.net/pictures/340000/nahled/farm-robotics.jpg",
+        ),
+        Image(
+            id="image_6",
+            related_id="ideation_6",
+            file_name="fishing-boats.jpg",
+            file_path="https://www.publicdomainpictures.net/pictures/30000/nahled/fishing-boats-12054570215cW6I.jpg",
+        ),
+        Image(
+            id="image_7",
+            related_id="ideation_7",
+            file_name="fish-farming.jpg",
+            file_path="https://www.publicdomainpictures.net/pictures/220000/nahled/fish-farming.jpg",
         ),
     ]
 
@@ -297,7 +345,6 @@ def get_mock_ideation():
             id="ideation_1",
             title="스마트 농업 시스템",
             content="스마트 기술을 활용한 효율적인 농업 관리 솔루션.",
-            image="https://www.publicdomainpictures.net/pictures/320000/nahled/farming.jpg",  # 스마트 농업 관련 이미지
             presentation_date=datetime.now() + timedelta(days=30),
             close_date=datetime.now() + timedelta(days=60),
             status=Status.IN_PROGRESS,
@@ -315,7 +362,6 @@ def get_mock_ideation():
             id="ideation_2",
             title="친환경 농업 기술",
             content="유기농 기술을 적용한 지속 가능한 농업 아이디어.",
-            image="https://www.publicdomainpictures.net/pictures/200000/nahled/organic-farming-1468283323ALH.jpg",
             # 친환경 농업 이미지
             presentation_date=datetime.now() + timedelta(days=30),
             close_date=datetime.now() + timedelta(days=60),
@@ -334,7 +380,6 @@ def get_mock_ideation():
             id="ideation_3",
             title="드론을 활용한 농업 자동화",
             content="드론 기술을 사용한 효율적인 농업 생산 관리 시스템.",
-            image="https://www.publicdomainpictures.net/pictures/290000/nahled/farm-technology.jpg",  # 농업 드론 이미지
             presentation_date=datetime.now() + timedelta(days=40),
             close_date=datetime.now() + timedelta(days=70),
             status=Status.IN_PROGRESS,
@@ -352,7 +397,6 @@ def get_mock_ideation():
             id="ideation_4",
             title="데이터 기반의 농업 최적화",
             content="빅데이터와 AI를 통해 농작물 생산성 향상을 위한 솔루션.",
-            image="https://www.publicdomainpictures.net/pictures/300000/nahled/agricultural-fields.jpg",  # 농업 데이터 이미지
             presentation_date=datetime.now() + timedelta(days=25),
             close_date=datetime.now() + timedelta(days=55),
             status=Status.IN_PROGRESS,
@@ -370,7 +414,6 @@ def get_mock_ideation():
             id="ideation_5",
             title="농업용 로봇 자동화",
             content="농업 작업을 효율적으로 자동화하는 로봇 기술 솔루션.",
-            image="https://www.publicdomainpictures.net/pictures/340000/nahled/farm-robotics.jpg",  # 농업 로봇 이미지
             presentation_date=datetime.now() + timedelta(days=35),
             close_date=datetime.now() + timedelta(days=65),
             status=Status.IN_PROGRESS,
@@ -389,8 +432,6 @@ def get_mock_ideation():
             id="ideation_6",
             title="해양 어류 자동 관리 시스템",
             content="해양 자원을 효율적으로 관리하는 자동화 어업 시스템.",
-            image="https://www.publicdomainpictures.net/pictures/30000/nahled/fishing-boats-12054570215cW6I.jpg",
-            # 어업 관련 이미지
             presentation_date=datetime.now() + timedelta(days=20),
             close_date=datetime.now() + timedelta(days=50),
             status=Status.IN_PROGRESS,
@@ -408,7 +449,6 @@ def get_mock_ideation():
             id="ideation_7",
             title="친환경 해양 양식 기술",
             content="환경에 영향을 최소화하는 해양 양식 기술.",
-            image="https://www.publicdomainpictures.net/pictures/220000/nahled/fish-farming.jpg",  # 친환경 어업 이미지
             presentation_date=datetime.now() + timedelta(days=40),
             close_date=datetime.now() + timedelta(days=70),
             status=Status.IN_PROGRESS,
@@ -535,7 +575,7 @@ def get_mock_board():
 def get_mock_finance():
     return [
         Finance(
-            ideation_id="Ideation_1",
+            ideation_id="ideation_1",
             direct_material=10000.0,  # 직접재료비
             direct_expense=5000.0,  # 직접경비
             direct_labor=4000.0,  # 직접노무비
@@ -581,7 +621,7 @@ def get_mock_finance():
             ],  # 직원 수 (연차별 리스트)
         ),
         Finance(
-            ideation_id="Ideation_2",
+            ideation_id="ideation_2",
             direct_material=15000.0,  # 직접재료비
             direct_expense=7000.0,  # 직접경비
             direct_labor=4500.0,  # 직접노무비

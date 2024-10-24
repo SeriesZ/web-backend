@@ -12,6 +12,14 @@ class Attachment(Base):
     related_id = Column(String, nullable=False)  # 연결된 id
 
 
+class Image(Base):
+    __tablename__ = "images"
+
+    file_name = Column(String, nullable=False)  # 파일 이름
+    file_path = Column(String, nullable=False)  # 파일 경로 (s3 저장 경로)
+    related_id = Column(String, nullable=False)  # 연결된 id
+
+
 class Comment(Base):
     __tablename__ = "comments"
 

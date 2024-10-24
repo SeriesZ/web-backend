@@ -11,8 +11,10 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.ext.declarative import as_declarative, declared_attr
 from sqlalchemy.orm import configure_mappers, sessionmaker
 
+from common.config import ROOT_PATH
+
 load_dotenv()
-ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
+
 SQLALCHEMY_DATABASE_URL = os.getenv("SQLALCHEMY_DATABASE_URL")
 KST = pytz.timezone("Asia/Seoul")
 
@@ -39,9 +41,15 @@ async def get_db():
             raise e
 
 
+async def init_enforcer():
+    await adapter.create_table()
+    await enforcer.load_policy()
+    enforcer.enable_auto_save(True)
+
+
 async def init_db():
     configure_mappers()
-    await adapter.create_table()
+    await init_enforcer()
     async with async_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 

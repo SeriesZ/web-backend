@@ -1,8 +1,8 @@
 from collections import defaultdict
+from datetime import datetime
 from typing import Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi_cache.decorator import cache
+from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Form, Request
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -10,24 +10,26 @@ from starlette import status
 
 from auth import get_current_user
 from database import enforcer, get_db
-from handler.attachment import get_attachments, get_comments
-from model.ideation import Ideation, Theme
+from model.ideation import Ideation, Theme, Status
 from model.user import User
+from schema.attachment import AttachmentResponse
 from schema.ideation import IdeationRequest, IdeationResponse, ThemeResponse
 from schema.invest import InvestmentResponse
+from service.ideation import find_theme_by_id, find_ideation_by_id
 from service.repository import CrudRepository, get_repository
+from utils.path_util import save_image, save_file
 
 router = APIRouter(tags=["아이디어"])
 
 
 @router.get("/themes", response_model=List[ThemeResponse])
 async def get_themes(
-    theme_name: Optional[str] = None,
-    repo: CrudRepository = Depends(get_repository),
+        theme_id: Optional[str] = None,
+        repo: CrudRepository = Depends(get_repository),
 ):
     clauses = None
-    if theme_name:
-        clauses = and_(Theme.name == theme_name)
+    if theme_id:
+        clauses = and_(Theme.id == theme_id)
     themes = await repo.fetch_all(Theme, limit=100, clauses=clauses)
     return [ThemeResponse.model_validate(theme) for theme in themes]
 
@@ -36,16 +38,16 @@ async def get_themes(
 @router.get(
     "/ideation/themes", response_model=Dict[str, List[IdeationResponse]]
 )
-@cache(expire=60 * 10)
+# @cache(expire=60 * 10)
 async def fetch_ideation_list_by_themes(
-    theme_name: Optional[str] = None,
-    offset: int = 0,
-    limit: int = 10,
-    db: AsyncSession = Depends(get_db),
-    repo: CrudRepository = Depends(get_repository),
+        theme_id: Optional[str] = None,
+        offset: int = 0,
+        limit: int = 10,
+        db: AsyncSession = Depends(get_db),
+        repo: CrudRepository = Depends(get_repository),
 ):
     # 모든 고유한 테마를 조회
-    themes_result = await get_themes(theme_name, repo)
+    themes_result = await get_themes(theme_id, repo)
 
     # 1. 서브쿼리: 각 테마별 상위 N개의 id 가져오기
     subquery = (
@@ -73,12 +75,14 @@ async def fetch_ideation_list_by_themes(
             )
         )
         .options(
-            selectinload(Ideation.user), selectinload(Ideation.investments)
+            selectinload(Ideation.user),
+            selectinload(Ideation.investments),
         )
     )
 
     result = await db.execute(query)
-    ideations = result.scalars().all()
+    ideations = result.unique().scalars().all()
+
     # 결과를 각 테마별로 그룹화
     theme_ideations = defaultdict(list)
     for ideation in ideations:
@@ -98,49 +102,65 @@ async def fetch_ideation_list_by_themes(
 
 @router.get("/ideation/{ideation_id}", response_model=IdeationResponse)
 async def get_ideation(
-    ideation_id: str,
-    repo: CrudRepository = Depends(get_repository),
-    current_user: User = Depends(get_current_user),
+        current_user: User = Depends(get_current_user),
+        ideation: Ideation = Depends(find_ideation_by_id),
 ):
-    ideation = await repo.find_by_id(Ideation, ideation_id)
-
     if current_user.id != ideation.user_id:
         ideation.view_count += 1
-
-    result = dict(
-        **ideation.__dict__,
-        attachments=await get_attachments(ideation_id, repo),
-        comments=await get_comments(ideation_id, repo),
-    )
-    return IdeationResponse.model_validate(result)
+    return IdeationResponse.model_validate(ideation)
 
 
-# TODO form에서 file upload 따로
 @router.post("/ideation", response_model=IdeationResponse)
 async def create_ideation(
-    request: IdeationRequest,
-    repo: CrudRepository = Depends(get_repository),
-    current_user: User = Depends(get_current_user),
+        request: Request,
+        title: str = Form(...),
+        content: str = Form(...),
+        theme_id: str = Form(...),
+        presentation_date: Optional[datetime] = Form(None),
+        close_date: Optional[datetime] = Form(None),
+        status: Optional[Status] = Form(Status.BEFORE_START),
+        images: List[UploadFile] = File(None),
+        files: Optional[List[UploadFile]] = File(None),
+
+        repo: CrudRepository = Depends(get_repository),
+        db: AsyncSession = Depends(get_db),
+        current_user: User = Depends(get_current_user),
 ):
-    ideation = Ideation(**request.dict())
-    ideation.user_id = current_user.id
+    ideation = Ideation(
+        title=title,
+        content=content,
+        presentation_date=presentation_date,
+        close_date=close_date,
+        status=status,
+        user_id=current_user.id,
+    )
+    ideation.theme = await find_theme_by_id(theme_id, db)
+    ideation.images = [] if not images else [await save_image(image, ideation.id, request) for image in images]
+    ideation.attachments = [] if not files else [await save_file(f, ideation.id) for f in files]
     ideation = await repo.create(ideation)
     await enforcer.add_policies([(current_user.id, ideation.id, "write")])
-    return IdeationResponse.model_validate(ideation)
+
+    response = IdeationResponse.model_validate(ideation)
+    response.images = [AttachmentResponse.model_validate(i) for i in ideation.images]
+    response.attachments = [AttachmentResponse.model_validate(a) for a in ideation.attachments]
+    return response
 
 
 @router.put("/ideation/{ideation_id}", response_model=IdeationResponse)
 async def update_ideation(
-    ideation_id: str,
-    request: IdeationRequest,
-    repo: CrudRepository = Depends(get_repository),
-    current_user: User = Depends(get_current_user),
+        ideation_id: str,
+        request: IdeationRequest = Depends(),
+        ideation: Ideation = Depends(find_ideation_by_id),
+        theme: Theme = Depends(find_theme_by_id),
+        current_user: User = Depends(get_current_user),
 ):
     if not enforcer.enforce(current_user.id, ideation_id, "write"):
         raise HTTPException(status_code=403, detail="Permission denied")
 
-    ideation = Ideation(**request.dict(), id=ideation_id)
-    ideation = await repo.update(ideation)
+    ideation.theme = theme
+    for key, value in request.dict(exclude_unset=True).items():
+        if value and hasattr(ideation, key):
+            setattr(ideation, key, value)
     return IdeationResponse.model_validate(ideation)
 
 
@@ -148,11 +168,11 @@ async def update_ideation(
     "/ideations/{ideation_id}", status_code=status.HTTP_204_NO_CONTENT
 )
 async def delete_ideation(
-    ideation_id: str,
-    repo: CrudRepository = Depends(get_repository),
-    current_user: User = Depends(get_current_user),
+        ideation: Ideation = Depends(find_ideation_by_id),
+        db: AsyncSession = Depends(get_db),
+        current_user: User = Depends(get_current_user),
 ):
-    if not enforcer.enforce(current_user.id, ideation_id, "write"):
+    if not enforcer.enforce(current_user.id, ideation.id, "write"):
         raise HTTPException(status_code=403, detail="Permission denied")
+    await db.delete(ideation)
 
-    await repo.delete(Ideation(id=ideation_id))

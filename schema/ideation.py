@@ -18,11 +18,9 @@ class ThemeResponse(BaseModel):
 
 
 class IdeationRequest(BaseModel):
-    id: Optional[str] = None
     title: str
     content: str
-    image: str
-    theme: str
+    theme_id: str
     presentation_date: Optional[datetime] = None
     close_date: Optional[datetime] = None
     status: Optional[str] = None
@@ -32,25 +30,18 @@ class IdeationResponse(BaseModel):
     id: str
     title: str
     content: str
-    image: str
-    theme: ThemeResponse
+    theme: ThemeResponse = Field(None, description="업종")
     presentation_date: Optional[datetime] = None
     close_date: Optional[datetime] = None
     status: Optional[str] = None
     view_count: int
 
-    investment_goal: Optional[int] = Field(
-        ..., description="목표 금액 (단위: 만원)"
-    )
-    investments: Optional[List[InvestmentResponse]] = Field(
-        ..., description="투자 진행 상황"
-    )
-    attachments: Optional[List[AttachmentResponse]] = Field(
-        None, description="첨부파일 목록"
-    )
-    comments: Optional[List[CommentResponse]] = Field(
-        None, description="댓글 목록"
-    )
+    investment_goal: Optional[int] = Field(None, description="목표 금액 (단위: 만원)")
+    investments: Optional[List[InvestmentResponse]] = Field(None, description="투자 진행 상황")
+
+    images: Optional[List[AttachmentResponse]] = Field(None, description="이미지 목록")
+    attachments: Optional[List[AttachmentResponse]] = Field(None, description="첨부파일 목록")
+    comments: Optional[List[CommentResponse]] = Field(None, description="댓글 목록")
 
     class Config:
         from_attributes = True
