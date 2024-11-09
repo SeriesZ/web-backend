@@ -11,6 +11,7 @@ from common.config import ASSETS_DIR
 from handler.attachment import router as attachment_router
 from handler.board import router as board_router
 from handler.chat import router as chat_router
+from handler.finance import router as finance_router
 from handler.ideation import router as ideation_router
 from handler.invest import router as invest_router
 from handler.user import router as user_router
@@ -39,6 +40,7 @@ app.include_router(ideation_router)
 app.include_router(invest_router)
 app.include_router(attachment_router)
 app.include_router(chat_router)
+app.include_router(finance_router)
 
 app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="assets")
 
