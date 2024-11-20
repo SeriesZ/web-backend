@@ -1,6 +1,6 @@
 import enum
 
-from sqlalchemy import Column, DateTime, Enum, Integer, String
+from sqlalchemy import Column, DateTime, Enum, Integer, String, Float
 from sqlalchemy.orm import relationship
 
 from database import Base
@@ -19,6 +19,7 @@ class Theme(Base):
     name = Column(String)
     description = Column(String)
     image = Column(String)
+    psr_value = Column(Float)
 
 
 # 아이디어

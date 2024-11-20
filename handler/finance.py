@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy import and_
 from starlette import status
 from starlette.exceptions import HTTPException
 

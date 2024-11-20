@@ -1,7 +1,7 @@
 import random
 from datetime import datetime, timedelta
 
-from database import AsyncSessionLocal
+from database import AsyncSessionLocal, enforcer
 from model.attachment import Attachment, Comment, Image
 from model.board import Board, BoardCategory
 from model.finance import Finance
@@ -25,6 +25,11 @@ async def create_mock():
                 mock_data += get_mock_finance()
                 session.add_all(mock_data)
                 await session.commit()
+
+                for i in range(1, 8):
+                    await enforcer.add_policies("user_1", f"ideation_{i}")
+                for i in range(1, 3):
+                    await enforcer.add_policies("user_1", f"attachment_{i}")
             except Exception as e:
                 await session.rollback()
                 raise e
@@ -37,120 +42,140 @@ def get_mock_themes():
             name="농업",
             description="",
             image="https://cdn-icons-png.flaticon.com/512/194/194041.png",
+            psr_value=12.0,
         ),
         Theme(
             id="theme_2",
             name="어업",
             description="",
             image="https://cdn-icons-png.flaticon.com/512/194/194049.png",
+            psr_value=10.0,
         ),
         Theme(
             id="theme_3",
             name="광업",
             description="",
             image="https://cdn-icons-png.flaticon.com/512/2582/2582355.png",
+            psr_value=14.0,
         ),
         Theme(
             id="theme_4",
             name="제조업",
             description="",
             image="https://cdn-icons-png.flaticon.com/512/3409/3409613.png",
+            psr_value=16.0,
         ),
         Theme(
             id="theme_5",
             name="건설업",
             description="",
             image="https://cdn-icons-png.flaticon.com/512/1995/1995591.png",
+            psr_value=18.0,
         ),
         Theme(
             id="theme_6",
             name="정보통신업",
             description="",
             image="https://cdn-icons-png.flaticon.com/512/1407/1407691.png",
+            psr_value=20.0,
         ),
         Theme(
             id="theme_7",
             name="운수업",
             description="",
             image="https://cdn-icons-png.flaticon.com/512/1876/1876050.png",
+            psr_value=9.0,
         ),
         Theme(
             id="theme_8",
             name="숙박업",
             description="",
             image="https://cdn-icons-png.flaticon.com/512/2331/2331970.png",
+            psr_value=8.0,
         ),
         Theme(
             id="theme_9",
             name="음식점업",
             description="",
             image="https://cdn-icons-png.flaticon.com/512/535/535285.png",
+            psr_value=7.0,
         ),
         Theme(
             id="theme_10",
             name="금융업",
             description="",
             image="https://cdn-icons-png.flaticon.com/512/3458/3458363.png",
+            psr_value=6.0,
         ),
         Theme(
             id="theme_11",
             name="보험업",
             description="",
             image="https://cdn-icons-png.flaticon.com/512/4227/4227973.png",
+            psr_value=5.0,
         ),
         Theme(
             id="theme_12",
             name="부동산업",
             description="",
             image="https://cdn-icons-png.flaticon.com/512/1828/1828469.png",
+            psr_value=4.0,
         ),
         Theme(
             id="theme_13",
             name="전기 가스 증기 및 수도사업",
             description="",
             image="https://cdn-icons-png.flaticon.com/512/2911/2911574.png",
+            psr_value=3.0,
         ),
         Theme(
             id="theme_14",
             name="보건업",
             description="",
             image="https://cdn-icons-png.flaticon.com/512/1883/1883981.png",
+            psr_value=2.0,
         ),
         Theme(
             id="theme_15",
             name="사회복지서비스업",
             description="",
             image="https://cdn-icons-png.flaticon.com/512/1077/1077012.png",
+            psr_value=1.0,
         ),
         Theme(
             id="theme_16",
             name="예술 스포츠 및 여가관련 서비스업",
             description="",
             image="https://cdn-icons-png.flaticon.com/512/2921/2921222.png",
+            psr_value=11.0,
         ),
         Theme(
             id="theme_17",
             name="교육서비스업",
             description="",
             image="https://cdn-icons-png.flaticon.com/512/2731/2731286.png",
+            psr_value=13.0,
         ),
         Theme(
             id="theme_18",
             name="도매 및 소매업",
             description="",
             image="https://cdn-icons-png.flaticon.com/512/1152/1152011.png",
+            psr_value=15.0,
         ),
         Theme(
             id="theme_19",
             name="연구개발업",
             description="",
             image="https://cdn-icons-png.flaticon.com/512/3280/3280989.png",
+            psr_value=17.0,
         ),
         Theme(
             id="theme_20",
             name="광고 및 시장 조사업",
             description="",
             image="https://cdn-icons-png.flaticon.com/512/2810/2810868.png",
+            psr_value=19.0,
         ),
     ]
 

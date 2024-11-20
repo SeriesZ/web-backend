@@ -12,6 +12,7 @@ class ThemeResponse(BaseModel):
     name: str
     image: str
     description: Optional[str] = None
+    psr_value: Optional[float] = None
 
     class Config:
         from_attributes = True
