@@ -66,6 +66,18 @@ class CrudRepository:
         await self.db.delete(existing_entity)
         await self.db.commit()
 
+    async def exists(self, entity_class, entity_id, field_name="id"):
+        field = getattr(entity_class, field_name, None)
+        if not field:
+            raise ModuleNotFoundError(
+                f"Field '{field_name}' not found in {entity_class.__name__}"
+            )
+
+        result = await self.db.execute(
+            select(1).where(field == entity_id).limit(1)
+        )
+        return result.scalar() is not None
+
 
 async def get_repository(
     db: AsyncSession = Depends(get_db),

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from sqlalchemy import and_
 from starlette import status
 from starlette.exceptions import HTTPException
 
@@ -41,10 +42,15 @@ async def create_finance(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="permission denied",
         )
+    is_exists = await repo.exists(Finance, request.ideation_id, field_name="ideation_id")
+    if is_exists:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="already exists",
+        )
 
     finance = Finance(
         **request.dict(),
-        user_id=current_user.id,
     )
     finance = await repo.create(finance)
     return FinanceResponse.model_validate(finance)
