@@ -26,10 +26,9 @@ async def create_mock():
                 session.add_all(mock_data)
                 await session.commit()
 
-                for i in range(1, 8):
-                    await enforcer.add_policies("user_1", f"ideation_{i}")
-                for i in range(1, 3):
-                    await enforcer.add_policies("user_1", f"attachment_{i}")
+                polices = [("user_1", f"ideation_{i}", "write") for i in range(1, 8)]
+                polices += [("user_1", f"attachment_{i}", "write") for i in range(1, 3)]
+                await enforcer.add_policies(polices)
             except Exception as e:
                 await session.rollback()
                 raise e
