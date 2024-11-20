@@ -35,6 +35,13 @@ class FinanceScheme(BaseModel):
     trade_counts: Optional[List[int]]  # 거래발생 수 (연차별 리스트)
     employee_counts: Optional[List[int]]  # 직원 수 (연차별 리스트)
 
+    # 기업가치평가 항목
+    par_value: Optional[float]  # 액면가\
+    mean_revenue: Optional[float]  # 평균매출액
+    target_investor_rate: Optional[float]  # 목표 투자자 지분율
+    max_investor_count: Optional[float]  # 최대 투자자 수
+    max_invest_per: Optional[float]  # 인당 최대 투자금
+
     class Config:
         from_attributes = True
 

@@ -36,3 +36,10 @@ class Finance(Base):
     # 연차별 거래발생 수 및 직원 수
     trade_counts = Column(JSON)  # 거래발생 수 (연차별 리스트)
     employee_counts = Column(JSON)  # 직원 수 (연차별 리스트)
+
+    # 기업가치평가 항목
+    par_value = Column(Float)  # 액면가
+    mean_revenue = Column(Float)  # 평균매출액
+    target_investor_rate = Column(Float)  # 목표 투자자 지분율
+    max_investor_count = Column(Float)  # 최대 투자자 수
+    max_invest_per = Column(Float)  # 인당 최대 투자금
