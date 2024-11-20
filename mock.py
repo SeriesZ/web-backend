@@ -595,6 +595,11 @@ def get_mock_finance():
             business_expense_increase_rate=2.0,  # 업무추진비 인상율
             maintenance_cost_increase_rate=1.5,  # 접대비 인상율
             contingency_increase_rate=2.0,  # 예비비 인상율
+            par_value=1000.0,  # 액면가
+            mean_revenue=20000.0,  # 평균매출액
+            target_investor_rate=20.0,  # 목표 투자자 지분율
+            max_investor_count=10.0,  # 최대 투자자 수
+            max_invest_per=100000.0,  # 인당 최대 투자금
             trade_counts=[
                 100,
                 150,
@@ -641,6 +646,11 @@ def get_mock_finance():
             business_expense_increase_rate=2.5,  # 업무추진비 인상율
             maintenance_cost_increase_rate=1.8,  # 접대비 인상율
             contingency_increase_rate=2.2,  # 예비비 인상율
+            par_value=1200.0,  # 액면가
+            mean_revenue=25000.0,  # 평균매출액
+            target_investor_rate=25.0,  # 목표 투자자 지분율
+            max_investor_count=12.0,  # 최대 투자자 수
+            max_invest_per=120000.0,  # 인당 최대 투자금
             trade_counts=[
                 120,
                 180,
