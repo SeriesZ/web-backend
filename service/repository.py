@@ -55,6 +55,7 @@ class CrudRepository:
             if key != "_sa_instance_state":
                 setattr(existing_entity, key, value)
         self.db.add(existing_entity)
+        await self.db.commit()
         await self.db.refresh(existing_entity)
         return existing_entity
 
