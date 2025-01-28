@@ -22,8 +22,8 @@ async def create_investment(
     current_user: User = Depends(get_current_user),
 ):
     # FIXME investor를 group으로 바꾸던가 해야함
-    if not current_user.group_id == request.investor_id:
-        raise HTTPException(status_code=403, detail="Permission denied")
+    # if not current_user.group_id == request.investor_id:
+    #     raise HTTPException(status_code=403, detail="Permission denied")
     investment = Investment(**request.dict())
     investment = await repo.create(investment)
     await enforcer.add_policies(
@@ -42,8 +42,8 @@ async def update_investment(
     repo: CrudRepository = Depends(get_repository),
     current_user: User = Depends(get_current_user),
 ):
-    if not enforcer.enforce(current_user.id, investment_id, "write"):
-        raise HTTPException(status_code=403, detail="Permission denied")
+    # if not enforcer.enforce(current_user.id, investment_id, "write"):
+    #     raise HTTPException(status_code=403, detail="Permission denied")
 
     investment = Investment(**request.dict())
     investment = await repo.update(investment)
@@ -58,8 +58,8 @@ async def delete_investment(
     repo: CrudRepository = Depends(get_repository),
     current_user: User = Depends(get_current_user),
 ):
-    if not enforcer.enforce(current_user.id, investment_id, "write"):
-        raise HTTPException(status_code=403, detail="Permission denied")
+    # if not enforcer.enforce(current_user.id, investment_id, "write"):
+    #     raise HTTPException(status_code=403, detail="Permission denied")
     await repo.delete(Investment(id=investment_id))
 
 
@@ -105,8 +105,8 @@ async def update_investor(
     repo: CrudRepository = Depends(get_repository),
     current_user: User = Depends(get_current_user),
 ):
-    if not enforcer.enforce(current_user.group_id, investor_id, "write"):
-        raise HTTPException(status_code=403, detail="Permission denied")
+    # if not enforcer.enforce(current_user.group_id, investor_id, "write"):
+    #     raise HTTPException(status_code=403, detail="Permission denied")
 
     investor = Investor(**request.dict())
     investor = await repo.update(investor)
@@ -121,6 +121,6 @@ async def delete_investor(
     repo: CrudRepository = Depends(get_repository),
     current_user: User = Depends(get_current_user),
 ):
-    if not enforcer.enforce(current_user.group_id, investor_id, "write"):
-        raise HTTPException(status_code=403, detail="Permission denied")
+    # if not enforcer.enforce(current_user.group_id, investor_id, "write"):
+    #     raise HTTPException(status_code=403, detail="Permission denied")
     await repo.delete(Investor(id=investor_id))

@@ -27,8 +27,8 @@ class InvestorResponse(BaseModel):
 
 
 class InvestmentRequest(BaseModel):
-    ideation_id: int
-    investor_id: int
+    ideation_id: str
+    investor_id: str
     amount: int
     approval_status: bool
 
