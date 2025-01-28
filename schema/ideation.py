@@ -19,9 +19,9 @@ class ThemeResponse(BaseModel):
 
 
 class IdeationRequest(BaseModel):
-    title: str
-    content: str
-    theme_id: str
+    title: Optional[str] = None
+    content: Optional[str] = None
+    theme_id: Optional[str] = None
     presentation_url: Optional[str] = None
     presentation_date: Optional[datetime] = None
     close_date: Optional[datetime] = None
