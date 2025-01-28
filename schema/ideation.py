@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
+from model.ideation import Status
 from schema.attachment import AttachmentResponse, CommentResponse
 from schema.invest import InvestmentResponse
 
@@ -25,7 +26,7 @@ class IdeationRequest(BaseModel):
     presentation_url: Optional[str] = None
     presentation_date: Optional[datetime] = None
     close_date: Optional[datetime] = None
-    status: Optional[str] = None
+    status: Optional[Status] = None
 
 
 class IdeationResponse(BaseModel):
