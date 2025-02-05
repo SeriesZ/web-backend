@@ -31,7 +31,6 @@ class Ideation(Base):
     content = Column(String)  # 아이디어 설명
     presentation_url = Column(String)  # 사업설명회 url
     presentation_date = Column(DateTime(timezone=True))  # 사업설명회 날짜
-    create_date = Column(DateTime, default=datetime.utcnow)  # 아이디어 등록일
     close_date = Column(DateTime)  # 라운드 종료 날짜
     status = Column(
         Enum(Status), default=Status.BEFORE_START

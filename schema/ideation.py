@@ -31,12 +31,14 @@ class IdeationRequest(BaseModel):
 
 class IdeationResponse(BaseModel):
     id: str
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
     title: str
     content: str
     theme: ThemeResponse = Field(None, description="업종")
     presentation_url: Optional[str] = None
     presentation_date: Optional[datetime] = None
-    create_date: Optional[datetime] = None
     close_date: Optional[datetime] = None
     status: Optional[str] = None
     view_count: int
