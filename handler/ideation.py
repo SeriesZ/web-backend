@@ -100,6 +100,18 @@ async def fetch_ideation_list_by_themes(
     return theme_ideations
 
 
+@router.get("/ideation/user", response_model=List[IdeationResponse])
+async def get_ideation_by_user(
+        offset: int = 0,
+        limit: int = 10,
+        current_user: User = Depends(get_current_user),
+        repo: CrudRepository = Depends(get_repository),
+):
+    clauses = and_(Ideation.user_id == current_user.id)
+    ideations = await repo.fetch_all(Ideation, offset=offset, limit=limit, clauses=clauses)
+    return [IdeationResponse.model_validate(ideation) for ideation in ideations]
+
+
 @router.get("/ideation/{ideation_id}", response_model=IdeationResponse)
 async def get_ideation(
         current_user: User = Depends(get_current_user),
