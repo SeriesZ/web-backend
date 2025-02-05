@@ -16,6 +16,7 @@ class InvestorRequest(BaseModel):
 
 
 class InvestorResponse(BaseModel):
+    id: str
     name: str
     description: str
     image: str
