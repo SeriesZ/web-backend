@@ -19,7 +19,7 @@ class CrudRepository:
             statement = statement.where(clauses)
 
         result = await self.db.execute(statement.offset(offset).limit(limit))
-        return result.scalars().all()
+        return result.unique().scalars().all()
 
     async def find_by_id(self, entity_class, entity_id, field_name="id"):
         field = getattr(entity_class, field_name, None)
