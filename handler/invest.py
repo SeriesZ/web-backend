@@ -44,8 +44,7 @@ async def update_investment(
 ):
     # if not enforcer.enforce(current_user.id, investment_id, "write"):
     #     raise HTTPException(status_code=403, detail="Permission denied")
-
-    investment = Investment(**request.dict())
+    investment = Investment(id=investment_id, **request.dict())
     investment = await repo.update(investment)
     return InvestmentResponse.model_validate(investment)
 
@@ -108,7 +107,7 @@ async def update_investor(
     # if not enforcer.enforce(current_user.group_id, investor_id, "write"):
     #     raise HTTPException(status_code=403, detail="Permission denied")
 
-    investor = Investor(**request.dict())
+    investor = Investor(id=investor_id, **request.dict())
     investor = await repo.update(investor)
     return InvestorResponse.model_validate(investor)
 

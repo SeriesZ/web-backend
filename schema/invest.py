@@ -37,6 +37,7 @@ class InvestmentRequest(BaseModel):
 
 
 class InvestmentResponse(BaseModel):
+    id: str
     ideation_id: str
     investor: InvestorResponse
 
