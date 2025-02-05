@@ -36,6 +36,7 @@ class IdeationResponse(BaseModel):
     theme: ThemeResponse = Field(None, description="업종")
     presentation_url: Optional[str] = None
     presentation_date: Optional[datetime] = None
+    create_date: Optional[datetime] = None
     close_date: Optional[datetime] = None
     status: Optional[str] = None
     view_count: int
