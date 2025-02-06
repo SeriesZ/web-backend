@@ -31,7 +31,7 @@ class CrudRepository:
         entity = await self.db.execute(
             select(entity_class).where(field == entity_id)
         )
-        entity = entity.scalar_one_or_none()
+        entity = entity.unique().scalar_one_or_none()
         if not entity:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
