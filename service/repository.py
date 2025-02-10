@@ -18,6 +18,10 @@ class CrudRepository:
         if clauses is not None:
             statement = statement.where(clauses)
 
+        # created_at desc로 정렬
+        if hasattr(entity_class, 'created_at'):
+            statement = statement.order_by(entity_class.created_at.desc())
+
         result = await self.db.execute(statement.offset(offset).limit(limit))
         return result.unique().scalars().all()
 
